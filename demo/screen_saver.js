@@ -151,10 +151,12 @@ class ScreenSaver extends Painter {
   #draw_line(i, hue) {
     this.ctx.save();
     this.ctx.strokeStyle = `hsl(${hue}, ${this.saturation}%, 50%)`;
-    this.ctx.beginPath();
-    this.ctx.moveTo(this.screen_points[i].x, this.screen_points[i].y);
-    this.ctx.lineTo(this.screen_points[i + 1].x, this.screen_points[i + 1].y);
-    this.ctx.stroke();
+    this.ctx.strokeLine(
+      this.screen_points[i].x,
+      this.screen_points[i].y,
+      this.screen_points[i + 1].x,
+      this.screen_points[i + 1].y
+    );
     this.ctx.restore();
   }
 }

@@ -17,6 +17,7 @@ class Painter {
     };
 
     this.#set_up_canvas();
+    this.#set_up_ctx_polyfills();
     this.#set_up_event_handlers();
   }
 
@@ -31,6 +32,95 @@ class Painter {
     canvas.style.height = "100%";
 
     this.html_root.appendChild(canvas);
+  }
+
+  #set_up_ctx_polyfills() {
+    if (!this.ctx.clear) {
+      this.ctx.clear = () => {
+        this.#clear();
+      };
+    }
+    if (!this.ctx.strokeLine) {
+      this.ctx.strokeLine = (from_x, from_y, to_x, to_y) => {
+        this.#stroke_line(from_x, from_y, to_x, to_y);
+      };
+    }
+    if (!this.ctx.fillCircle) {
+      this.ctx.fillCircle = (x, y, r) => {
+        this.#fill_circle(x, y, r);
+      };
+    }
+    if (!this.ctx.strokeCircle) {
+      this.ctx.strokeCircle = (x, y, r) => {
+        this.#stroke_circle(x, y, r);
+      };
+    }
+  }
+
+  #clear() {
+    const { x, y, w, h } = this.rect;
+    this.ctx.clearRect(x, y, w, h);
+  }
+
+  #stroke_line(from_x, from_y, to_x, to_y) {
+    [from_x, from_y, to_x, to_y] = this.#correct_line_stroke_bleed(
+      from_x,
+      from_y,
+      to_x,
+      to_y
+    );
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(from_x, from_y);
+    this.ctx.lineTo(to_x, to_y);
+    this.ctx.stroke();
+  }
+
+  /**
+   * Correct stroke bleed on lines with odd pixel width.
+   *
+   * The drawing reference is the midpoint of the line. So if the line's
+   * width is odd, say 1px, and is drawn at x=100px, the theoretical
+   * line should be drawn from x=99.5px to x=100.5px. This is obviously
+   * not possible, and in reality the line will be drawn from x=99px to
+   * x=101px, making for a line width of 2px.
+   *
+   * To correct this unwanted effect, and if the line width is odd, we
+   * move the reference by half a pixel. So, building on the previous
+   * example, the new theoretical line should be drawn at x=(100+0.5)px,
+   * or x=100.5px. Now, the real line will be drawn from x=100px to
+   * x=101px, making for a line width of 1px, as expected.
+   */
+  #correct_line_stroke_bleed(from_x, from_y, to_x, to_y) {
+    const is_line_vertical = from_x === to_x;
+    const is_line_horizontal = from_y === to_y;
+    const correction = this.#compute_line_position_correction();
+    if (is_line_vertical) {
+      from_x += correction;
+      to_x += correction;
+    } else if (is_line_horizontal) {
+      from_y += correction;
+      to_y += correction;
+    }
+    return [from_x, from_y, to_x, to_y];
+  }
+
+  #compute_line_position_correction() {
+    const is_low_res_device = window.devicePixelRatio < 2;
+    const is_line_width_odd = this.ctx.lineWidth % 2 !== 0;
+    return is_low_res_device && is_line_width_odd ? 0.5 : 0;
+  }
+
+  #fill_circle(x, y, r) {
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, r, 0, 2 * Math.PI);
+    this.ctx.fill();
+  }
+
+  #stroke_circle(x, y, r) {
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, r, 0, 2 * Math.PI);
+    this.ctx.stroke();
   }
 
   #set_up_event_handlers() {
@@ -59,6 +149,8 @@ class Painter {
     this.rect.h = this.html_root.offsetHeight;
     this.rect.xw = this.rect.x + this.rect.w;
     this.rect.yh = this.rect.y + this.rect.h;
+    this.rect.cx = this.rect.x + this.rect.w / 2;
+    this.rect.cy = this.rect.y + this.rect.h / 2;
     this.rect.ar = this.rect.w / this.rect.h;
 
     const scaled_width = Math.floor(this.rect.w * scale_factor);

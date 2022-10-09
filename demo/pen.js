@@ -51,8 +51,7 @@ class Pen extends Painter {
   }
 
   render() {
-    const { x, y, w, h } = this.rect;
-    this.ctx.clearRect(x, y, w, h);
+    this.ctx.clear();
     this.#set_up_style();
 
     this.#draw_path();
