@@ -1,3 +1,193 @@
+if (!Number.prototype.mod) {
+  Number.prototype.mod = function (n) {
+    "use strict";
+    return ((this % n) + n) % n;
+  };
+}
+
+class _PixelContext {
+  constructor(parent) {
+    this._rect = parent.rect;
+    this.ctx = parent.ctx;
+    this.pixelSize = 1;
+    this._buffer = undefined;
+  }
+
+  /**
+   * Get number of screen pixels to use to represent one world pixel.
+   *
+   * @returns {Number}
+   */
+  get pixelSize() {
+    return this._pixelSize;
+  }
+
+  /**
+   * Set number of screen pixels to use to represent one world pixel.
+   *
+   * @param {Number} size
+   */
+  set pixelSize(size) {
+    this._pixelSize = size * window.devicePixelRatio;
+  }
+
+  /**
+   * Return number of world pixels on X axis.
+   *
+   * @returns {Number}
+   */
+  get width() {
+    return this._buffer && Math.ceil(this._buffer.width / this.pixelSize);
+  }
+
+  /**
+   * Return number of world pixels on Y axis.
+   *
+   * @returns {Number}
+   */
+  get height() {
+    return this._buffer && Math.ceil(this._buffer.height / this.pixelSize);
+  }
+
+  /**
+   * Return number of world pixels on X axis visible on screen.
+   *
+   * @returns {Number}
+   */
+  get true_width() {
+    return this._buffer && this._buffer.width / this.pixelSize;
+  }
+
+  /**
+   * Return number of world pixels on Y axis visible on screen.
+   *
+   * @returns {Number}
+   */
+  get true_height() {
+    return this._buffer && this._buffer.height / this.pixelSize;
+  }
+
+  /**
+   * Return current buffer (and refresh if first time).
+   *
+   * @returns {ImageData}
+   */
+  getBuffer() {
+    if (this._buffer === undefined) this.refreshBuffer();
+    return this._buffer;
+  }
+
+  /**
+   * Update buffer with current screen state.
+   */
+  refreshBuffer() {
+    const { w, h } = this._rect;
+    const pxr = window.devicePixelRatio;
+    this._buffer = this.ctx.getImageData(0, 0, w * pxr, h * pxr);
+  }
+
+  /**
+   * Set buffer to draw to.
+   *
+   * @param {ImageData} buffer
+   */
+  setBuffer(buffer) {
+    this._buffer = buffer;
+  }
+
+  /**
+   * Draw buffer state on screen.
+   */
+  putBuffer() {
+    this.ctx.putImageData(this._buffer, 0, 0);
+  }
+
+  /**
+   * Deep copy a buffer.
+   *
+   * @param {ImageData} buffer
+   * @returns {ImageData}
+   */
+  cloneBuffer(buffer) {
+    return new ImageData(
+      new Uint8ClampedArray(buffer.data),
+      buffer.width,
+      buffer.height
+    );
+  }
+
+  /**
+   * Return color components of single world pixel.
+   *
+   * @param {Number} x
+   * @param {Number} y
+   * @returns {Number[]}
+   */
+  getPixel(x, y) {
+    const { data, width, height } = this._buffer;
+    [x, y] = this.worldToScreen(x, y);
+    if (x < 0 || x >= width || y < 0 || y >= height) return [0, 0, 0, 0];
+    const i = (y * width + x) * 4;
+    return [data[i + 0], data[i + 1], data[i + 2], data[i + 3]];
+  }
+
+  /**
+   * Set color components of single world pixel.
+   *
+   * @param {Number} x
+   * @param {Number} y
+   * @param {Number[]} color
+   */
+  setPixel(x, y, color) {
+    [x, y] = this.worldToScreen(x, y);
+    for (let i = x; i < x + this.pixelSize; ++i) {
+      for (let j = y; j < y + this.pixelSize; ++j) {
+        this.#set_screen_pixel(i, j, color);
+      }
+    }
+  }
+
+  #set_screen_pixel(x, y, color) {
+    const { data, width, height } = this._buffer;
+    if (x < 0 || x >= width || y < 0 || y >= height) return;
+    const i = (y * width + x) * 4;
+    this.#set_screen_pixel_components(data, i, color);
+  }
+
+  #set_screen_pixel_components(array, index, color) {
+    array[index + 0] = color[0];
+    array[index + 1] = color[1];
+    array[index + 2] = color[2];
+    if (color.length > 3) {
+      array[index + 3] = color[3];
+    }
+  }
+
+  /**
+   * Fill buffer with single color.
+   *
+   * @param {Number[]} color
+   */
+  fillBuffer(color) {
+    const data = this._buffer.data;
+    for (let i = 0; i < data.length; i += 4) {
+      this.#set_screen_pixel_components(data, i, color);
+    }
+  }
+
+  screenToWorld(x, y) {
+    x = Math.floor((x / this._rect.w) * this.true_width);
+    y = Math.floor((y / this._rect.h) * this.true_height);
+    return [x, y];
+  }
+
+  worldToScreen(x, y) {
+    x *= this.pixelSize;
+    y *= this.pixelSize;
+    return [x, y];
+  }
+}
+
 class Painter {
   constructor() {
     this.html_root = document.getElementById("root");
@@ -55,6 +245,7 @@ class Painter {
         this.#stroke_circle(x, y, r);
       };
     }
+    this.pxctx = new _PixelContext(this);
   }
 
   #clear() {
@@ -160,6 +351,8 @@ class Painter {
     this.ctx.canvas.height = scaled_height;
 
     this.ctx.scale(scale_factor, scale_factor);
+
+    this.pxctx.refreshBuffer();
   }
 
   exec() {
