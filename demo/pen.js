@@ -12,42 +12,41 @@ class Pen extends Painter {
     this.show_points = true;
     this.line_width = 2;
     this.font_size = 12;
-    this.#set_up_event_handlers();
   }
 
-  #set_up_event_handlers() {
-    this.ctx.canvas.addEventListener("mousedown", () => {
-      this.points = [];
-    });
-    this.ctx.canvas.addEventListener("mousemove", (e) => {
-      if (!this.mouse.is_pressed) return;
-      this.points.push({ x: e.clientX, y: e.clientY });
-    });
-    window.addEventListener("keyup", (e) => {
-      switch (e.key.toUpperCase()) {
-        case "N":
-          this.interpolation = PenInterpolation.None;
-          break;
-        case "L":
-          this.interpolation = PenInterpolation.Linear;
-          break;
-        case "Q":
-          this.interpolation = PenInterpolation.Quadratic;
-          break;
-        case "F":
-          this.interpolation = PenInterpolation.Flow;
-          break;
-        case " ":
-          this.show_points = !this.show_points;
-          break;
-        case "ARROWUP":
-          this.line_width = Math.min(this.line_width + 1, 20);
-          break;
-        case "ARROWDOWN":
-          this.line_width = Math.max(this.line_width - 1, 1);
-          break;
-      }
-    });
+  mouse_press_event(x, y) {
+    this.points = [];
+  }
+
+  mouse_move_event(x, y) {
+    if (!this.mouse.is_pressed) return;
+    this.points.push({ x, y });
+  }
+
+  key_press_event(key) {
+    switch (key.toUpperCase()) {
+      case "N":
+        this.interpolation = PenInterpolation.None;
+        break;
+      case "L":
+        this.interpolation = PenInterpolation.Linear;
+        break;
+      case "Q":
+        this.interpolation = PenInterpolation.Quadratic;
+        break;
+      case "F":
+        this.interpolation = PenInterpolation.Flow;
+        break;
+      case " ":
+        this.show_points = !this.show_points;
+        break;
+      case "ARROWUP":
+        this.line_width = Math.min(this.line_width + 1, 20);
+        break;
+      case "ARROWDOWN":
+        this.line_width = Math.max(this.line_width - 1, 1);
+        break;
+    }
   }
 
   render() {

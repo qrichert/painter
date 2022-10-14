@@ -5,9 +5,309 @@ if (!Number.prototype.mod) {
   };
 }
 
-class _PixelContext {
+/**
+ * @startuml
+ * class Rect {
+ *   + x : Number
+ *   + y : Number
+ *   + w : Number
+ *   + h : Number
+ *   + xw : Number
+ *   + yh : Number
+ *   + cx : Number
+ *   + cy : Number
+ *   + ar : Number
+ *   + equals(other_rect) : Boolean
+ *   + contains_point(x, y, offset?) : Boolean
+ * }
+ * @enduml
+ */
+class Rect {
+  constructor(x = 0, y = 0, w = 0, h = 0) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+  }
+
+  get x() {
+    return this._x;
+  }
+
+  set x(x) {
+    this._x = x;
+    this.#update_values();
+  }
+
+  get y() {
+    return this._y;
+  }
+
+  set y(y) {
+    this._y = y;
+    this.#update_values();
+  }
+
+  get w() {
+    return this._w;
+  }
+
+  set w(w) {
+    this._w = w;
+    this.#update_values();
+  }
+
+  get h() {
+    return this._h;
+  }
+
+  set h(h) {
+    this._h = h;
+    this.#update_values();
+  }
+
+  get xw() {
+    return this._xw;
+  }
+
+  get yh() {
+    return this._yh;
+  }
+
+  get cx() {
+    return this._cx;
+  }
+
+  get cy() {
+    return this._cy;
+  }
+
+  get ar() {
+    return this._ar;
+  }
+
+  #update_values() {
+    this._xw = this._x + this._w;
+    this._yh = this._y + this._h;
+    this._cx = this._x + this._w / 2;
+    this._cy = this._y + this._h / 2;
+    this._ar = this._w / this._h;
+  }
+
+  equals(other_rect) {
+    return (
+      this.x === other_rect.x &&
+      this.y === other_rect.y &&
+      this.w === other_rect.w &&
+      this.h === other_rect.h
+    );
+  }
+
+  contains_point(x, y, offset = 0) {
+    return this.#contains_x(x, offset) && this.#contains_y(y, offset);
+  }
+
+  #contains_x(x, offset = 0) {
+    const left = this.x;
+    const right = this.xw;
+    return x - offset >= left && x + offset <= right;
+  }
+
+  #contains_y(y, offset = 0) {
+    const top = this.y;
+    const bottom = this.yh;
+    return y - offset >= top && y + offset <= bottom;
+  }
+}
+
+/**
+ * @startuml
+ * class Mouse {
+ *   + x : Number
+ *   + y : Number
+ *   + is_pressed : Boolean
+ *   + is_dragging : Boolean
+ * }
+ * @enduml
+ */
+class _Mouse {
+  /**
+   * @param {HTMLElement} parent
+   */
   constructor(parent) {
-    this._rect = parent.rect;
+    if (_Mouse._instance) {
+      return _Mouse._instance;
+    }
+    _Mouse._instance = this;
+
+    this.parent = parent;
+
+    this._x = -1;
+    this._y = -1;
+    this._is_pressed = false;
+    this._is_dragging = false;
+
+    this.#set_up_event_handlers();
+  }
+
+  get x() {
+    return this._x;
+  }
+
+  get y() {
+    return this._y;
+  }
+
+  get is_pressed() {
+    return this._is_pressed;
+  }
+
+  get is_dragging() {
+    return this._is_dragging;
+  }
+
+  #set_up_event_handlers() {
+    this.parent.addEventListener("mousedown", () => {
+      this.#mouse_down_event_handler();
+    });
+    window.addEventListener("mouseup", () => {
+      this.#mouse_up_event_handler();
+    });
+    window.addEventListener("mousemove", (e) => {
+      this.#mouse_move_event_handler(e.offsetX, e.offsetY);
+    });
+  }
+
+  #mouse_down_event_handler() {
+    this._is_pressed = true;
+    this._is_dragging = false;
+  }
+
+  #mouse_up_event_handler() {
+    this._is_pressed = false;
+    this._is_dragging = false;
+  }
+
+  #mouse_move_event_handler(x, y) {
+    this._is_dragging = this._is_pressed;
+    this._x = x;
+    this._y = y;
+  }
+}
+
+/**
+ * @startuml
+ * class Keyboard {
+ *   + keys_pressed : String[]
+ *   + is_key_pressed(key) : Boolean
+ * }
+ * @enduml
+ */
+class _Keyboard {
+  /**
+   * @param {HTMLElement} parent
+   */
+  constructor(parent) {
+    if (_Keyboard._instance) {
+      return _Keyboard._instance;
+    }
+    _Keyboard._instance = this;
+
+    this.parent = parent;
+    this.keys_pressed = [];
+
+    this.#set_up_event_handlers();
+  }
+
+  is_key_pressed(key) {
+    key = this.#convert_special_key_to_standard_key(key);
+    return this.keys_pressed.indexOf(key) > -1;
+  }
+
+  #convert_special_key_to_standard_key(key) {
+    switch (key) {
+      case "Cmd":
+      case "Ctrl":
+      case "Meta":
+        return "Control";
+      default:
+        return key;
+    }
+  }
+
+  #set_up_event_handlers() {
+    window.addEventListener("keydown", (e) => {
+      this.#key_down_event_handler(e.key);
+    });
+    window.addEventListener("keyup", (e) => {
+      this.#key_up_event_handler(e.key);
+    });
+    window.addEventListener("blur", () => {
+      this.#blur_event_handler();
+    });
+  }
+
+  #key_down_event_handler(key) {
+    key = this.#convert_special_key_to_standard_key(key);
+    if (this.keys_pressed.indexOf(key) > -1) {
+      return;
+    }
+    this.keys_pressed.push(key);
+    this.parent.dispatchEvent(
+      new CustomEvent("_keypress", { detail: { key } })
+    );
+  }
+
+  #key_up_event_handler(key) {
+    key = this.#convert_special_key_to_standard_key(key);
+    this.keys_pressed = this.keys_pressed.filter((x) => x !== key);
+    this.parent.dispatchEvent(
+      new CustomEvent("_keyrelease", { detail: { key } })
+    );
+  }
+
+  #blur_event_handler() {
+    for (const key of [...this.keys_pressed]) {
+      this.#key_up_event_handler(key);
+    }
+    this.keys_pressed = [];
+  }
+}
+
+/**
+ * @startuml
+ * class _PixelContext {
+ *   + parent : Painter
+ *   + ctx : CanvasContext
+ *   + pixelSize : Number
+ *   + width : Number
+ *   + height : Number
+ *   + trueWidth : Number
+ *   + trueHeight : Number
+ *   + getBuffer() : ImageData
+ *   + refreshBuffer() : void
+ *   + setBuffer(buffer) : void
+ *   + putBuffer() : void
+ *   + cloneBuffer(buffer) : ImageData
+ *   + getPixel(x, y) : Number[]
+ *   + setPixel(x, y, color) : void
+ *   + fillBuffer(color) : void
+ *   + screenToWorld(x, y) : Number[]
+ *   + worldToScreen(x, y) : Number[]
+ * }
+ * @enduml
+ */
+class _PixelContext {
+  /**
+   * @param {Painter} parent
+   */
+  constructor(parent) {
+    if (_PixelContext._instance) {
+      return _PixelContext._instance;
+    }
+    _PixelContext._instance = this;
+
+    this.parent = parent;
     this.ctx = parent.ctx;
     this.pixelSize = 1;
     this._buffer = undefined;
@@ -54,7 +354,7 @@ class _PixelContext {
    *
    * @returns {Number}
    */
-  get true_width() {
+  get trueWidth() {
     return this._buffer && this._buffer.width / this.pixelSize;
   }
 
@@ -63,7 +363,7 @@ class _PixelContext {
    *
    * @returns {Number}
    */
-  get true_height() {
+  get trueHeight() {
     return this._buffer && this._buffer.height / this.pixelSize;
   }
 
@@ -81,7 +381,7 @@ class _PixelContext {
    * Update buffer with current screen state.
    */
   refreshBuffer() {
-    const { w, h } = this._rect;
+    const { w, h } = this.parent.rect;
     const pxr = window.devicePixelRatio;
     this._buffer = this.ctx.getImageData(0, 0, w * pxr, h * pxr);
   }
@@ -176,8 +476,9 @@ class _PixelContext {
   }
 
   screenToWorld(x, y) {
-    x = Math.floor((x / this._rect.w) * this.true_width);
-    y = Math.floor((y / this._rect.h) * this.true_height);
+    const { w, h } = this.parent.rect;
+    x = Math.floor((x / w) * this.trueWidth);
+    y = Math.floor((y / h) * this.trueHeight);
     return [x, y];
   }
 
@@ -188,23 +489,59 @@ class _PixelContext {
   }
 }
 
+/**
+ * enum ScrollDirection {
+ *   + Undefined
+ *   + Horizontal
+ *   + Vertical
+ * }
+ */
+const ScrollDirection = {
+  Undefined: "Undefined",
+  Horizontal: "Horizontal",
+  Vertical: "Vertical",
+};
+
+/**
+ * @startuml
+ * class Painter {
+ *   + html_root : HTMLDivElement
+ *   + rect : Rect
+ *   + mouse : _Mouse
+ *   + keyboard : _Keyboard
+ *   + ctx : CanvasContext
+ *   + pxctx : _PixelContext
+ *   + ctx.clear() : void
+ *   + ctx.textWidth(text) : Number
+ *   + ctx.strokeLine(from_x, from_y, to_x, to_y) : void
+ *   + ctx.strokeCircle(x, y, r) : void
+ *   + ctx.fillCircle(x, y, r) : void
+ *   + resize_event() : void
+ *   + mouse_press_event(x, y) : void
+ *   + mouse_release_event(x, y) : void
+ *   + mouse_click_event(x, y) : void
+ *   + mouse_double_click_event(x, y) : void
+ *   + mouse_move_event(x, y, dx, dy) : void
+ *   + mouse_drag_event(dx, dy) : void
+ *   + wheel_event(x, y, dx, dy) : void
+ *   + horizontal_wheel_event(dx) : void
+ *   + vertical_wheel_event(dy) : void
+ *   + key_press_event(key) : void
+ *   + key_release_event(key) : void
+ *   + paste_event(data) : void
+ *   + paste_text_event(text) : void
+ *   + exec() : void
+ *   + setup() : void {abstract}
+ *   + render(delta_time) : void {abstract}
+ * }
+ * @enduml
+ */
 class Painter {
   constructor() {
     this.html_root = document.getElementById("root");
-    this.rect = {
-      x: 0,
-      y: 0,
-      w: 0,
-      h: 0,
-      xw: 0,
-      yh: 0,
-      ar: 0,
-    };
-    this.mouse = {
-      x: 0,
-      y: 0,
-      is_pressed: false,
-    };
+    this.rect = new Rect();
+    this.mouse = new _Mouse(this.html_root);
+    this.keyboard = new _Keyboard(this.html_root);
 
     this.#set_up_canvas();
     this.#set_up_ctx_polyfills();
@@ -230,19 +567,22 @@ class Painter {
         this.#clear();
       };
     }
+    if (!this.ctx.textWidth) {
+      this.ctx.textWidth = (text) => this.#text_width(text);
+    }
     if (!this.ctx.strokeLine) {
       this.ctx.strokeLine = (from_x, from_y, to_x, to_y) => {
         this.#stroke_line(from_x, from_y, to_x, to_y);
       };
     }
-    if (!this.ctx.fillCircle) {
-      this.ctx.fillCircle = (x, y, r) => {
-        this.#fill_circle(x, y, r);
-      };
-    }
     if (!this.ctx.strokeCircle) {
       this.ctx.strokeCircle = (x, y, r) => {
         this.#stroke_circle(x, y, r);
+      };
+    }
+    if (!this.ctx.fillCircle) {
+      this.ctx.fillCircle = (x, y, r) => {
+        this.#fill_circle(x, y, r);
       };
     }
     this.pxctx = new _PixelContext(this);
@@ -251,6 +591,10 @@ class Painter {
   #clear() {
     const { x, y, w, h } = this.rect;
     this.ctx.clearRect(x, y, w, h);
+  }
+
+  #text_width(text) {
+    return this.ctx.measureText(text).width;
   }
 
   #stroke_line(from_x, from_y, to_x, to_y) {
@@ -302,34 +646,57 @@ class Painter {
     return is_low_res_device && is_line_width_odd ? 0.5 : 0;
   }
 
-  #fill_circle(x, y, r) {
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, r, 0, 2 * Math.PI);
-    this.ctx.fill();
-  }
-
   #stroke_circle(x, y, r) {
     this.ctx.beginPath();
     this.ctx.arc(x, y, r, 0, 2 * Math.PI);
     this.ctx.stroke();
   }
 
+  #fill_circle(x, y, r) {
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, r, 0, 2 * Math.PI);
+    this.ctx.fill();
+  }
+
   #set_up_event_handlers() {
-    document.addEventListener("DOMContentLoaded", (e) => {
+    document.addEventListener("DOMContentLoaded", () => {
       this.#root_resize_event();
     });
-    window.addEventListener("resize", (e) => {
+    window.addEventListener("resize", () => {
       this.#root_resize_event();
     });
-    this.ctx.canvas.addEventListener("mousedown", () => {
-      this.mouse.is_pressed = true;
+    this.html_root.addEventListener("mousedown", (e) => {
+      this.mouse_press_event(e.offsetX, e.offsetY);
     });
-    this.ctx.canvas.addEventListener("mousemove", (e) => {
-      this.mouse.x = e.offsetX;
-      this.mouse.y = e.offsetY;
+    // "window" to catch release events from everywhere.
+    window.addEventListener("mouseup", (e) => {
+      this.mouse_release_event(e.offsetX, e.offsetY);
     });
-    window.addEventListener("mouseup", () => {
-      this.mouse.is_pressed = false;
+    this.html_root.addEventListener("click", (e) => {
+      this.mouse_click_event(e.offsetX, e.offsetY);
+    });
+    this.html_root.addEventListener("dblclick", (e) => {
+      this.mouse_double_click_event(e.offsetX, e.offsetY);
+    });
+    window.addEventListener("mousemove", (e) => {
+      this.#mouse_move_event_handler(
+        e.offsetX,
+        e.offsetY,
+        e.movementX,
+        e.movementY
+      );
+    });
+    this.html_root.addEventListener("wheel", (e) => {
+      this.#wheel_event_handler(e.offsetX, e.offsetY, e.deltaX, e.deltaY);
+    });
+    this.html_root.addEventListener("_keypress", (e) => {
+      this.key_press_event(e.detail?.key || "");
+    });
+    this.html_root.addEventListener("_keyrelease", (e) => {
+      this.key_release_event(e.detail?.key || "");
+    });
+    window.addEventListener("paste", (e) => {
+      this.#paste_event_handler(e);
     });
   }
 
@@ -338,11 +705,6 @@ class Painter {
 
     this.rect.w = this.html_root.offsetWidth;
     this.rect.h = this.html_root.offsetHeight;
-    this.rect.xw = this.rect.x + this.rect.w;
-    this.rect.yh = this.rect.y + this.rect.h;
-    this.rect.cx = this.rect.x + this.rect.w / 2;
-    this.rect.cy = this.rect.y + this.rect.h / 2;
-    this.rect.ar = this.rect.w / this.rect.h;
 
     const scaled_width = Math.floor(this.rect.w * scale_factor);
     const scaled_height = Math.floor(this.rect.h * scale_factor);
@@ -353,7 +715,75 @@ class Painter {
     this.ctx.scale(scale_factor, scale_factor);
 
     this.pxctx.refreshBuffer();
+
+    this.resize_event();
   }
+
+  resize_event() {}
+
+  mouse_press_event(x, y) {}
+
+  mouse_release_event(x, y) {}
+
+  mouse_click_event(x, y) {}
+
+  mouse_double_click_event(x, y) {}
+
+  #mouse_move_event_handler(x, y, dx, dy) {
+    if (this.mouse.is_dragging) {
+      this.mouse_drag_event(x, y, dx, dy);
+    }
+    this.mouse_move_event(x, y, dx, dy);
+  }
+
+  mouse_move_event(x, y, dx, dy) {}
+
+  mouse_drag_event(dx, dy) {}
+
+  #wheel_event_handler(x, y, dx, dy) {
+    this.wheel_event(x, y, dx, dy);
+    const scroll_direction = this.#determine_scroll_direction(dx, dy);
+    switch (scroll_direction) {
+      case ScrollDirection.Horizontal:
+        this.horizontal_wheel_event(dx);
+        break;
+      case ScrollDirection.Vertical:
+        this.vertical_wheel_event(dy);
+        break;
+    }
+  }
+
+  /**
+   * Return direction of scroll with most magnitude.
+   */
+  #determine_scroll_direction(dx, dy) {
+    dx = Math.abs(dx);
+    dy = Math.abs(dy);
+    if (dx > dy) return ScrollDirection.Horizontal;
+    if (dy > dx) return ScrollDirection.Vertical;
+    return ScrollDirection.Undefined;
+  }
+
+  wheel_event(x, y, dx, dy) {}
+
+  horizontal_wheel_event(dx) {}
+
+  vertical_wheel_event(dy) {}
+
+  key_press_event(key) {}
+
+  key_release_event(key) {}
+
+  #paste_event_handler(e) {
+    e.preventDefault();
+    const data = e.clipboardData || window.clipboardData;
+    this.paste_event(data);
+    this.paste_text_event(data.getData("text"));
+  }
+
+  paste_event(data) {}
+
+  paste_text_event(text) {}
 
   exec() {
     if (document.readyState === "loading") {
@@ -386,8 +816,4 @@ class Painter {
   setup() {} // Override.
 
   render(delta_time) {} // Override.
-
-  text_width(text) {
-    return this.ctx.measureText(text).width;
-  }
 }

@@ -18,58 +18,56 @@ class ChaosGame extends Painter {
     this.font_size = 12;
     this.ctx.canvas.style.backgroundColor = "black";
     this.#init_ngon();
-    this.#set_up_event_handlers();
   }
 
   get scale() {
     return 0.45 * this.rect.h;
   }
 
-  #set_up_event_handlers() {
-    window.addEventListener("resize", () => {
-      this.was_reinitialized = true;
-    });
-    window.addEventListener("keyup", (e) => {
-      switch (e.key.toUpperCase()) {
-        case " ":
-          this.was_reinitialized = true;
-          break;
-        case "+":
-          this.ratio_value = RatioValue.Divisor;
-          ++this.ratio_divisor;
-          this.#update_ratio();
-          break;
-        case "-":
-          this.ratio_value = RatioValue.Divisor;
-          this.ratio_divisor = Math.max(this.ratio_divisor - 1, 2);
-          this.#update_ratio();
-          break;
-        case "G":
-          this.ratio_value = RatioValue.GoldenRatio;
-          this.#update_ratio();
-          break;
-        case ".":
-          this.never_same_vertex_twice = !this.never_same_vertex_twice;
-          break;
-        case "ARROWUP":
-          this.speed = Math.min(this.speed + 1, 4);
-          break;
-        case "ARROWDOWN":
-          this.speed = Math.max(this.speed - 1, 0);
-          break;
-        case "ARROWRIGHT":
-          ++this.n_sides;
-          this.#init_ngon();
-          this.#update_ratio();
-          break;
-        case "ARROWLEFT":
-          if (this.n_sides - 1 < 3) break;
-          --this.n_sides;
-          this.#init_ngon();
-          this.#update_ratio();
-          break;
-      }
-    });
+  resize_event() {
+    this.was_reinitialized = true;
+  }
+
+  key_press_event(key) {
+    switch (key.toUpperCase()) {
+      case " ":
+        this.was_reinitialized = true;
+        break;
+      case "+":
+        this.ratio_value = RatioValue.Divisor;
+        ++this.ratio_divisor;
+        this.#update_ratio();
+        break;
+      case "-":
+        this.ratio_value = RatioValue.Divisor;
+        this.ratio_divisor = Math.max(this.ratio_divisor - 1, 2);
+        this.#update_ratio();
+        break;
+      case "G":
+        this.ratio_value = RatioValue.GoldenRatio;
+        this.#update_ratio();
+        break;
+      case ".":
+        this.never_same_vertex_twice = !this.never_same_vertex_twice;
+        break;
+      case "ARROWUP":
+        this.speed = Math.min(this.speed + 1, 4);
+        break;
+      case "ARROWDOWN":
+        this.speed = Math.max(this.speed - 1, 0);
+        break;
+      case "ARROWRIGHT":
+        ++this.n_sides;
+        this.#init_ngon();
+        this.#update_ratio();
+        break;
+      case "ARROWLEFT":
+        if (this.n_sides - 1 < 3) break;
+        --this.n_sides;
+        this.#init_ngon();
+        this.#update_ratio();
+        break;
+    }
   }
 
   #init_ngon() {
@@ -208,7 +206,7 @@ class ChaosGame extends Painter {
       "[space] restart",
     ];
     const max_text_width = text.reduce(
-      (max, str) => Math.max(max, this.text_width(str)),
+      (max, str) => Math.max(max, this.ctx.textWidth(str)),
       0
     );
     const pos = (i) => [

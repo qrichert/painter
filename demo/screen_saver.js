@@ -15,7 +15,6 @@ class ScreenSaver extends Painter {
     this.saturation = 70;
     this.ctx.canvas.style.backgroundColor = "black";
     this.ctx.canvas.style.cursor = "none";
-    this.#set_up_event_handlers();
   }
 
   #create_points() {
@@ -35,31 +34,29 @@ class ScreenSaver extends Painter {
     return (Math.random() * (max - min) + min) * sign;
   }
 
-  #set_up_event_handlers() {
-    window.addEventListener("keyup", (e) => {
-      switch (e.key.toUpperCase()) {
-        case " ":
-          switch (this.interpolation) {
-            case ScreenSaverInterpolation.Fade:
-              this.interpolation = ScreenSaverInterpolation.Replace;
-              break;
-            case ScreenSaverInterpolation.Replace:
-              this.interpolation = ScreenSaverInterpolation.Add;
-              break;
-            case ScreenSaverInterpolation.Add:
-            default:
-              this.interpolation = ScreenSaverInterpolation.Fade;
-              break;
-          }
-          break;
-        case "ARROWUP":
-          this.saturation = Math.min(this.saturation + 10, 100);
-          break;
-        case "ARROWDOWN":
-          this.saturation = Math.max(this.saturation - 10, 0);
-          break;
-      }
-    });
+  key_press_event(key) {
+    switch (key.toUpperCase()) {
+      case " ":
+        switch (this.interpolation) {
+          case ScreenSaverInterpolation.Fade:
+            this.interpolation = ScreenSaverInterpolation.Replace;
+            break;
+          case ScreenSaverInterpolation.Replace:
+            this.interpolation = ScreenSaverInterpolation.Add;
+            break;
+          case ScreenSaverInterpolation.Add:
+          default:
+            this.interpolation = ScreenSaverInterpolation.Fade;
+            break;
+        }
+        break;
+      case "ARROWUP":
+        this.saturation = Math.min(this.saturation + 10, 100);
+        break;
+      case "ARROWDOWN":
+        this.saturation = Math.max(this.saturation - 10, 0);
+        break;
+    }
   }
 
   render(delta_time) {

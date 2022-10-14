@@ -3,50 +3,46 @@ class GameOfLife extends Painter {
     this.pxctx.pixelSize = 8;
     this.is_paused = false;
     this.draw_mode = null;
-    this.#set_up_event_handlers();
     this.#init_game();
   }
 
-  #set_up_event_handlers() {
-    window.addEventListener("resize", () => {
-      this.#init_game();
-    });
-    window.addEventListener("mousedown", (e) => {
-      if (!this.is_paused) return;
-      this.#draw_mouse(e.offsetX, e.offsetY);
-    });
-    window.addEventListener("mousemove", (e) => {
-      if (!this.is_paused || this.draw_mode === null) return;
-      this.#draw_mouse(e.offsetX, e.offsetY);
-    });
-    window.addEventListener("mouseup", () => {
-      this.draw_mode = null;
-    });
-    window.addEventListener("paste", (e) => {
-      if (!this.is_paused) return;
-      e.preventDefault();
-      const paste_data = e.clipboardData || window.clipboardData;
-      this.#draw_pattern(
-        this.mouse.x,
-        this.mouse.y,
-        paste_data.getData("text")
-      );
-    });
-    window.addEventListener("keyup", (e) => {
-      switch (e.key.toUpperCase()) {
-        case "C":
-          if (!this.is_paused) return;
-          this.#clear_screen();
-          this.#buffer_to_screen();
-          break;
-        case " ":
-          this.is_paused = !this.is_paused;
-          this.draw_mode = null;
-          // Enable get/put pixels for mouse drawing.
-          if (this.is_paused) this.old_buffer = this.new_buffer;
-          break;
-      }
-    });
+  resize_event() {
+    this.#init_game();
+  }
+
+  mouse_press_event(x, y) {
+    if (!this.is_paused) return;
+    this.#draw_mouse(x, y);
+  }
+
+  mouse_move_event(x, y) {
+    if (!this.is_paused || this.draw_mode === null) return;
+    this.#draw_mouse(x, y);
+  }
+
+  mouse_release_event(x, y) {
+    this.draw_mode = null;
+  }
+
+  key_press_event(key) {
+    switch (key.toUpperCase()) {
+      case "C":
+        if (!this.is_paused) return;
+        this.#clear_screen();
+        this.#buffer_to_screen();
+        break;
+      case " ":
+        this.is_paused = !this.is_paused;
+        this.draw_mode = null;
+        // Enable get/put pixels for mouse drawing.
+        if (this.is_paused) this.old_buffer = this.new_buffer;
+        break;
+    }
+  }
+
+  paste_text_event(text) {
+    if (!this.is_paused) return;
+    this.#draw_pattern(this.mouse.x, this.mouse.y, text);
   }
 
   #draw_mouse(x, y) {
