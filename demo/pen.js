@@ -2,6 +2,7 @@ const PenInterpolation = {
   None: "None",
   Linear: "Linear",
   Quadratic: "Quadratic",
+  Cubic: "Cubic",
   Flow: "Flow",
 };
 
@@ -33,6 +34,9 @@ class Pen extends Painter {
         break;
       case "Q":
         this.interpolation = PenInterpolation.Quadratic;
+        break;
+      case "C":
+        this.interpolation = PenInterpolation.Cubic;
         break;
       case "F":
         this.interpolation = PenInterpolation.Flow;
@@ -129,6 +133,31 @@ class Pen extends Painter {
     const radius = Math.min(1.5 * this.line_width, 3);
     this.#draw_points(this.interpolated_points, "green", radius);
   }
+
+  #draw_path_cubic() {
+    // this.ctx.bezierCurveTo();
+    this.#draw_cubic_control_points();
+  }
+
+  #interpolate_points_cubic(points) {
+    const interpolated_points = [];
+    for (let i = 0; i < points.length - 1; ++i) {
+      const p = points[i];
+      const p_next = points[i + 1];
+
+      const x = (p.x + p_next.x) / 2;
+      const y = (p.y + p_next.y) / 2;
+      const c1x = p.x;
+      const c1y = p.y;
+      const c2x = p.x;
+      const c2y = p.y;
+
+      interpolated_points.push({ x, y, c1x, c1y, c2x, c2y });
+    }
+    return interpolated_points;
+  }
+
+  #draw_cubic_control_points() {}
 
   #draw_path_flow() {
     this.#compute_flow_normals();
