@@ -90,7 +90,7 @@ class ChaosGame extends Painter {
         this.ratio = 1 / this.ratio_divisor;
         break;
       case RatioValue.GoldenRatio:
-        this.ratio = 1 / ((1 + Math.sqrt(5)) / 2);
+        this.ratio = 1 / Math.PHI;
         break;
     }
   }
@@ -188,13 +188,13 @@ class ChaosGame extends Painter {
 
   #draw_menu() {
     const text = [
-      `n-gon: ${this.n_sides}`,
+      `[←→] n-gon: ${this.n_sides}`,
+      `[↑↓] speed: 10^${this.speed}/f`,
       `ratio: ${this.ratio.toFixed(3)} ${
         this.ratio_value === RatioValue.Divisor
           ? "(1/" + this.ratio_divisor + ")"
           : ""
       }`,
-      `speed: 10^${this.speed}/f`,
       "",
       "ratio options:",
       "[+] 1/++n",
