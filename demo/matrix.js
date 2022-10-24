@@ -66,6 +66,7 @@ class Droplet {
     }
 
     if (Math.random() > 0.9) {
+      // TODO: don't do this if moon chars, etc.
       const randi = Math.floor(Math.random() * this.chars.length - 1) + 1;
       // this.chars[randi] = "🍆";
       this.chars[randi] = this.#get_random_char();
