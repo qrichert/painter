@@ -26,6 +26,40 @@
 //       \/θ\/        63.5° (theta = Field of View, FoV)
 //        \│/
 //
+// Why tan(θ) ? The bigger θ, the bigger tan on [0; 90]
+//  - θ = 0°/2 = 0° -> tan(θ) = 0
+//  - θ = 180°/2 = 90° -> tan(θ) = +Infinity
+// So the less you see (in terms of FoV°), the smaller tan, and the more
+// you see (more FoV° degrees), the bigger tan.
+// This models reality well, since at 180° you see everything in front
+// of you (+Inf), and at 0°, you see nothing (0).
+// We use θ/2 because this way, the cone (frustrum) is cut in half,
+// forming two identical right triangles (good for trig).
+// The bigger the tan, the smaller a same value of X or Y (for example,
+// X = 2 will be closer to the edge with FoV 10, thant with FoV 100,
+// where it will be closer to the middle. So we want to divide X/Y by
+// tan (bigger FoV = bigger tan = smaller X/Y (closer to middle).
+// (Smaller FoV = smaller tan = bigger X/Y (closer to edge or outside
+// of bounds)). So we need to divide X/Y by tan. But with matrices we
+// can only multiply, so we need to multiply by the inverse,
+// *1/tan(theta) instead of /tan(theta).
+// This gives us an arbitrary ratio. <= 1 if X/Y <= tan(t), and > 1 if
+// X/Y > tan(t). So values <= 1 are visible by the camera and >1 are not
+// visible.
+// This has nothing to do with depth. We only consider X/Y here,
+// regardless of how far they are. Depth is taken into account at the
+// next step, where we divide X/Y/Z by W. This division will shrink or
+// X/Y the further away from the camera. So effectivery, A value W/Y
+// greater than 1 (FoV) may effectively become visible if close enough
+// (i.e., the divisor is big enough to bring the value >1 to <=1).
+//
+// -1 ─────┬─────
+//    \    │    /
+//     \   │   /
+//   -1 \──┼──/
+//       \/θ\/
+//        \│/__________ (tan(t) [0;+inf] depending on FoV)
+//
 // meshes use triangles exclusively
 // triangle vertexes are in clockwise order (for normals to point out?)
 // Cube in front, "Bouh" behind
