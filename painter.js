@@ -5,6 +5,12 @@ if (!Number.prototype.mod) {
   };
 }
 
+if (!Array.prototype.shuffle) {
+  Array.prototype.shuffle = function () {
+    return this.sort(() => Math.random() - 0.5);
+  };
+}
+
 /**
  * @startuml
  * class Rect {
