@@ -17,6 +17,7 @@ if (!Number.prototype.mod) {
  *   + cx : Number
  *   + cy : Number
  *   + ar : Number
+ *   + dpr : Number
  *   + equals(other_rect) : Boolean
  *   + contains_point(x, y, offset?) : Boolean
  * }
@@ -84,6 +85,10 @@ class Rect {
 
   get ar() {
     return this._ar;
+  }
+
+  get dpr() {
+    return window.devicePixelRatio || 1;
   }
 
   #update_values() {
@@ -328,7 +333,7 @@ class _PixelContext {
    * @param {Number} size
    */
   set pixelSize(size) {
-    this._pixelSize = size * window.devicePixelRatio;
+    this._pixelSize = size * this.parent.rect.dpr;
   }
 
   /**
@@ -381,9 +386,8 @@ class _PixelContext {
    * Update buffer with current screen state.
    */
   refreshBuffer() {
-    const { w, h } = this.parent.rect;
-    const pxr = window.devicePixelRatio;
-    this._buffer = this.ctx.getImageData(0, 0, w * pxr, h * pxr);
+    const { w, h, dpr } = this.parent.rect;
+    this._buffer = this.ctx.getImageData(0, 0, w * dpr, h * dpr);
   }
 
   /**
@@ -509,13 +513,14 @@ const ScrollDirection = {
  *   + rect : Rect
  *   + mouse : _Mouse
  *   + keyboard : _Keyboard
- *   + ctx : CanvasContext
+ *   + ctx : CanvasRenderingContext2D
  *   + pxctx : _PixelContext
  *   + ctx.clear() : void
- *   + ctx.textWidth(text) : Number
+ *   + ctx.fillScreen() : void
  *   + ctx.strokeLine(from_x, from_y, to_x, to_y) : void
  *   + ctx.strokeCircle(x, y, r) : void
  *   + ctx.fillCircle(x, y, r) : void
+ *   + ctx.textWidth(text) : Number
  *   + resize_event() : void
  *   + mouse_press_event(x, y) : void
  *   + mouse_release_event(x, y) : void
@@ -530,6 +535,7 @@ const ScrollDirection = {
  *   + key_release_event(key) : void
  *   + paste_event(data) : void
  *   + paste_text_event(text) : void
+ *   + create_ctx(width, height): CanvasRenderingContext2D
  *   + exec() : void
  *   + setup() : void {abstract}
  *   + render(delta_time) : void {abstract}
@@ -544,7 +550,8 @@ class Painter {
     this.keyboard = new _Keyboard(this.html_root);
 
     this.#set_up_canvas();
-    this.#set_up_ctx_polyfills();
+    this.#set_up_ctx_polyfills(this.ctx);
+    this.#set_up_pixel_ctx();
     this.#set_up_event_handlers();
   }
 
@@ -561,54 +568,64 @@ class Painter {
     this.html_root.appendChild(canvas);
   }
 
-  #set_up_ctx_polyfills() {
-    if (!this.ctx.clear) {
-      this.ctx.clear = () => {
-        this.#clear();
+  #set_up_ctx_polyfills(ctx) {
+    if (!ctx.clear) {
+      ctx.clear = () => {
+        this.#clear(ctx);
       };
     }
-    if (!this.ctx.textWidth) {
-      this.ctx.textWidth = (text) => this.#text_width(text);
-    }
-    if (!this.ctx.strokeLine) {
-      this.ctx.strokeLine = (from_x, from_y, to_x, to_y) => {
-        this.#stroke_line(from_x, from_y, to_x, to_y);
+    if (!ctx.fillScreen) {
+      ctx.fillScreen = () => {
+        this.#fill_screen(ctx);
       };
     }
-    if (!this.ctx.strokeCircle) {
-      this.ctx.strokeCircle = (x, y, r) => {
-        this.#stroke_circle(x, y, r);
+    if (!ctx.strokeLine) {
+      ctx.strokeLine = (from_x, from_y, to_x, to_y) => {
+        this.#stroke_line(ctx, from_x, from_y, to_x, to_y);
       };
     }
-    if (!this.ctx.fillCircle) {
-      this.ctx.fillCircle = (x, y, r) => {
-        this.#fill_circle(x, y, r);
+    if (!ctx.strokeCircle) {
+      ctx.strokeCircle = (x, y, r) => {
+        this.#stroke_circle(ctx, x, y, r);
       };
     }
+    if (!ctx.fillCircle) {
+      ctx.fillCircle = (x, y, r) => {
+        this.#fill_circle(ctx, x, y, r);
+      };
+    }
+    if (!ctx.textWidth) {
+      ctx.textWidth = (text) => this.#text_width(ctx, text);
+    }
+  }
+
+  #set_up_pixel_ctx() {
     this.pxctx = new _PixelContext(this);
   }
 
-  #clear() {
+  #clear(ctx) {
     const { x, y, w, h } = this.rect;
-    this.ctx.clearRect(x, y, w, h);
+    ctx.clearRect(x, y, w, h);
   }
 
-  #text_width(text) {
-    return this.ctx.measureText(text).width;
+  #fill_screen(ctx) {
+    const { x, y, w, h } = this.rect;
+    ctx.fillRect(x, y, w, h);
   }
 
-  #stroke_line(from_x, from_y, to_x, to_y) {
+  #stroke_line(ctx, from_x, from_y, to_x, to_y) {
     [from_x, from_y, to_x, to_y] = this.#correct_line_stroke_bleed(
+      ctx,
       from_x,
       from_y,
       to_x,
       to_y
     );
 
-    this.ctx.beginPath();
-    this.ctx.moveTo(from_x, from_y);
-    this.ctx.lineTo(to_x, to_y);
-    this.ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(from_x, from_y);
+    ctx.lineTo(to_x, to_y);
+    ctx.stroke();
   }
 
   /**
@@ -626,10 +643,10 @@ class Painter {
    * or x=100.5px. Now, the real line will be drawn from x=100px to
    * x=101px, making for a line width of 1px, as expected.
    */
-  #correct_line_stroke_bleed(from_x, from_y, to_x, to_y) {
+  #correct_line_stroke_bleed(ctx, from_x, from_y, to_x, to_y) {
     const is_line_vertical = from_x === to_x;
     const is_line_horizontal = from_y === to_y;
-    const correction = this.#compute_line_position_correction();
+    const correction = this.#compute_line_position_correction(ctx);
     if (is_line_vertical) {
       from_x += correction;
       to_x += correction;
@@ -640,22 +657,26 @@ class Painter {
     return [from_x, from_y, to_x, to_y];
   }
 
-  #compute_line_position_correction() {
-    const is_low_res_device = window.devicePixelRatio < 2;
-    const is_line_width_odd = this.ctx.lineWidth % 2 !== 0;
+  #compute_line_position_correction(ctx) {
+    const is_low_res_device = this.rect.dpr < 2;
+    const is_line_width_odd = ctx.lineWidth % 2 !== 0;
     return is_low_res_device && is_line_width_odd ? 0.5 : 0;
   }
 
-  #stroke_circle(x, y, r) {
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, r, 0, 2 * Math.PI);
-    this.ctx.stroke();
+  #stroke_circle(ctx, x, y, r) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 2 * Math.PI);
+    ctx.stroke();
   }
 
-  #fill_circle(x, y, r) {
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, r, 0, 2 * Math.PI);
-    this.ctx.fill();
+  #fill_circle(ctx, x, y, r) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  #text_width(ctx, text) {
+    return ctx.measureText(text).width;
   }
 
   #set_up_event_handlers() {
@@ -701,7 +722,7 @@ class Painter {
   }
 
   #root_resize_event() {
-    const scale_factor = window.devicePixelRatio || 1;
+    const scale_factor = this.rect.dpr;
 
     this.rect.w = this.html_root.offsetWidth;
     this.rect.h = this.html_root.offsetHeight;
@@ -784,6 +805,28 @@ class Painter {
   paste_event(data) {}
 
   paste_text_event(text) {}
+
+  create_ctx(width = null, height = null) {
+    width = width || this.rect.w;
+    height = height || this.rect.h;
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const scale_factor = this.rect.dpr;
+
+    const scaled_width = Math.floor(width * scale_factor);
+    const scaled_height = Math.floor(height * scale_factor);
+
+    canvas.width = scaled_width;
+    canvas.height = scaled_height;
+
+    ctx.scale(scale_factor, scale_factor);
+
+    this.#set_up_ctx_polyfills(ctx);
+
+    return ctx;
+  }
 
   exec() {
     if (document.readyState === "loading") {
