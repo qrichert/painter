@@ -89,6 +89,11 @@ class StarWars extends Painter {
     this.text_size = 70;
     this.text_vertical_spacing = this.text_size / 2.8;
     this.accumulated_time = 0;
+    this.anim = {
+      a_long_time_ago: { start: 1, stop: 7, fade: 0.5 },
+      star_wars: { start: 8, stop: 10 },
+      opening_crawl: { start: 8, stop: Infinity },
+    };
     this.pc_anim = -0.7; //TODO
     this.#init_scene();
   }
@@ -241,31 +246,78 @@ class StarWars extends Painter {
   render(delta_time) {
     if (this.is_paused) return;
     this.accumulated_time += delta_time;
-    this.ctx.clear();
-    this.#draw_starry_night();
-    this.#compute_opening_crawl_horizon();
+    this.#clear_screen();
+
+    if (this.#is_animation_phase(this.anim.a_long_time_ago)) {
+      this.#draw_a_long_time_ago();
+      return;
+    }
+
+    if (
+      this.#is_animation_phase(this.anim.star_wars) ||
+      this.#is_animation_phase(this.anim.opening_crawl)
+    ) {
+      this.#draw_starry_night();
+    }
+
     this.#draw_opening_crawl(delta_time);
     this.#draw_opening_crawl_horizon_gradient();
     if (this.do_draw_wireframe) {
       this.#draw_opening_crawl_bounds();
     }
+  }
 
-    // TODO
-    if (this.accumulated_time < 2) {
-      this.ctx.fillStyle = "black";
-      this.ctx.fillScreen();
-      const { cx, cy } = this.rect;
-      const fsize = 50;
-      this.ctx.font = `lighter ${fsize}px sans-serif`;
-      this.ctx.textAlign = "left";
-      this.ctx.textBaseline = "top";
-      this.ctx.fillStyle = "#0066ff";
-      this.ctx.fillStyle = "#07e4fe";
-      const txt = A_LONG_TIME_AGO.trim().split("\n");
-      const txt_w = this.ctx.textWidth(txt[0]);
-      this.ctx.fillText(txt[0], cx - txt_w / 2, cy - fsize * 1.17);
-      this.ctx.fillText(txt[1], cx - txt_w / 2, cy + fsize * 0.17);
+  #clear_screen() {
+    this.ctx.fillStyle = "black";
+    this.ctx.fillScreen();
+  }
+
+  #is_animation_phase(phase) {
+    return (
+      this.accumulated_time >= phase.start && this.accumulated_time < phase.stop
+    );
+  }
+
+  #draw_a_long_time_ago() {
+    const { cx, cy } = this.rect;
+    const text = A_LONG_TIME_AGO.trim().split("\n");
+    const text_opacity = this.#compute_a_long_time_ago_text_opacity();
+
+    const font_size = 50;
+    this.ctx.font = `lighter ${font_size}px sans-serif`;
+    this.ctx.textAlign = "left";
+    this.ctx.textBaseline = "top";
+    // this.ctx.fillStyle = "#0066ff"; // TODO: original
+    this.ctx.fillStyle = "#07e4fe";
+
+    const text_width = text.reduce(
+      (max, str) => Math.max(this.ctx.textWidth(str), max),
+      0
+    );
+    const text_height =
+      font_size * text.length + 0.35 * font_size * (text.length - 1);
+
+    this.ctx.save();
+    this.ctx.globalAlpha = text_opacity;
+    const x = cx - text_width / 2;
+    let y = cy - text_height / 2;
+    for (let i = 0; i < text.length; ++i) {
+      const str = text[i];
+      this.ctx.fillText(str, x, y);
+      y += font_size + 0.35 * font_size;
     }
+
+    this.ctx.restore();
+  }
+
+  #compute_a_long_time_ago_text_opacity() {
+    const { start, stop, fade } = this.anim.a_long_time_ago;
+    const duration = stop - start;
+    const t = this.accumulated_time - start;
+
+    if (t <= fade) return t / fade;
+    if (t >= duration - fade) return 1 - (t - (duration - fade)) / fade;
+    return 1;
   }
 
   #draw_starry_night() {
@@ -278,23 +330,9 @@ class StarWars extends Painter {
     this.ctx.drawImage(this.stars_ctx.canvas, 0, yh + scroll, w, h);
   }
 
-  #compute_opening_crawl_horizon() {
-    const horizon = 537 / 609;
-
-    const world = {
-      far: horizon,
-      near: horizon - 0.07, // Bottom of gradient
-    };
-
-    const screen = {
-      far: this.#world_y_to_screen_y(world.far),
-      near: this.#world_y_to_screen_y(world.near),
-    };
-
-    this.horizon = { world, screen };
-  }
-
   #draw_opening_crawl(delta_time) {
+    this.#compute_opening_crawl_horizon();
+
     this.pc_anim += 0.16 * delta_time; // TODO: this.accmulated_time
     const screen_text_bottom = this.#world_y_to_screen_y(0);
     const screen_text_top = this.#world_y_to_screen_y(this.pc_anim);
@@ -345,6 +383,22 @@ class StarWars extends Painter {
         scanline_height // dh
       );
     }
+  }
+
+  #compute_opening_crawl_horizon() {
+    const horizon = 537 / 609;
+
+    const world = {
+      far: horizon,
+      near: horizon - 0.07, // Bottom of gradient
+    };
+
+    const screen = {
+      far: this.#world_y_to_screen_y(world.far),
+      near: this.#world_y_to_screen_y(world.near),
+    };
+
+    this.horizon = { world, screen };
   }
 
   #compute_opening_crawl_screen_bounds_for_world_y(world_y) {
