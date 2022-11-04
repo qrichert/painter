@@ -24,7 +24,7 @@ A long time ago in a galaxy far,
 far away....
 `;
 
-const OPENING_CRAWL = `
+let OPENING_CRAWL = `
 Episode IV
 A NEW HOPE
 
@@ -91,10 +91,15 @@ class StarWars extends Painter {
     this.accumulated_time = 0;
     this.anim = {
       a_long_time_ago: { start: 1, stop: 7, fade: 0.5 },
-      star_wars: { start: 8, stop: 10 },
-      opening_crawl: { start: 8, stop: Infinity },
+      star_wars: { start: 8, stop: 18 },
+      opening_crawl: { start: 16, stop: Infinity },
     };
-    this.pc_anim = -0.7; //TODO
+    this.color = {
+      orange: "#ffbb00",
+      blue: "#07e4fe",
+      blue77: "#0066ff",
+    };
+    this.pc_anim = 0; //TODO
     this.#init_scene();
   }
 
@@ -125,7 +130,7 @@ class StarWars extends Painter {
 
   #apply_font_style_to_ctx(ctx) {
     ctx.font = `bold ${this.text_size}px sans-serif`;
-    ctx.fillStyle = "#ffbb00";
+    ctx.fillStyle = this.color.orange;
     ctx.textBaseline = "top";
   }
 
@@ -241,6 +246,13 @@ class StarWars extends Painter {
   key_press_event(key) {
     if (key === " ") this.is_paused = !this.is_paused;
     if (key === "w") this.do_draw_wireframe = !this.do_draw_wireframe;
+    if (key === "7") {
+      OPENING_CRAWL = OPENING_CRAWL_77;
+      this.color.blue = this.color.blue77;
+      this.#init_scene();
+      this.accumulated_time = 0;
+      this.pc_anim = 0; //TODO
+    }
   }
 
   render(delta_time) {
@@ -250,7 +262,6 @@ class StarWars extends Painter {
 
     if (this.#is_animation_phase(this.anim.a_long_time_ago)) {
       this.#draw_a_long_time_ago();
-      return;
     }
 
     if (
@@ -260,10 +271,17 @@ class StarWars extends Painter {
       this.#draw_starry_night();
     }
 
-    this.#draw_opening_crawl(delta_time);
-    this.#draw_opening_crawl_horizon_gradient();
-    if (this.do_draw_wireframe) {
-      this.#draw_opening_crawl_bounds();
+    if (this.#is_animation_phase(this.anim.opening_crawl)) {
+      this.#draw_opening_crawl(delta_time);
+      this.#draw_opening_crawl_horizon_gradient();
+      if (this.do_draw_wireframe) {
+        this.#draw_opening_crawl_bounds();
+      }
+    }
+
+    // After gradient
+    if (this.#is_animation_phase(this.anim.star_wars)) {
+      this.#draw_star_wars(delta_time);
     }
   }
 
@@ -287,8 +305,8 @@ class StarWars extends Painter {
     this.ctx.font = `lighter ${font_size}px sans-serif`;
     this.ctx.textAlign = "left";
     this.ctx.textBaseline = "top";
-    // this.ctx.fillStyle = "#0066ff"; // TODO: original
-    this.ctx.fillStyle = "#07e4fe";
+    // this.ctx.fillStyle = this.color.blue77; // TODO: original
+    this.ctx.fillStyle = this.color.blue;
 
     const text_width = text.reduce(
       (max, str) => Math.max(this.ctx.textWidth(str), max),
@@ -306,7 +324,6 @@ class StarWars extends Painter {
       this.ctx.fillText(str, x, y);
       y += font_size + 0.35 * font_size;
     }
-
     this.ctx.restore();
   }
 
@@ -328,6 +345,83 @@ class StarWars extends Painter {
     this.ctx.drawImage(this.stars_ctx.canvas, 0, scroll, w, h);
     // Repeat it underneath for vpan.
     this.ctx.drawImage(this.stars_ctx.canvas, 0, yh + scroll, w, h);
+  }
+
+  #draw_star_wars(delta_time) {
+    const { h, cx, cy } = this.rect;
+
+    const font_size = this.#compute_star_wars_text_size();
+    const stroke_width = font_size * 0.07;
+    const text_opacity = this.#compute_star_wars_text_opacity();
+    this.ctx.font = `bolder ${font_size}px sans-serif`;
+    this.ctx.lineWidth = stroke_width;
+    this.ctx.textAlign = "center";
+    this.ctx.textBaseline = "middle";
+    this.ctx.strokeStyle = this.color.orange;
+    this.ctx.fillStyle = "black";
+    this.ctx.save();
+    this.ctx.globalAlpha = text_opacity;
+    this.ctx.strokeText("STAR", cx, cy - font_size / 2.4);
+    this.ctx.fillText("STAR", cx, cy - font_size / 2.4);
+    this.ctx.strokeText("WARS", cx, cy + font_size / 2.4);
+    this.ctx.fillText("WARS", cx, cy + font_size / 2.4);
+    this.ctx.restore();
+  }
+
+  #compute_star_wars_text_size() {
+    const { h } = this.rect;
+    const { start, stop } = this.anim.star_wars;
+    const duration = stop - start;
+    const t = this.accumulated_time - start;
+    const progress = t / duration;
+
+    let factor = 1;
+
+    // Points found by approximative measurement (1 per second)
+    // interpolate linearly
+    const points = [
+      [0, 1],
+      [0.1, 0.57],
+      [0.2, 0.38],
+      [0.3, 0.28],
+      [0.4, 0.21],
+      [0.5, 0.17],
+      [0.6, 0.14],
+      [0.7, 0.12],
+      [0.8, 0.1],
+      [0.9, 0.08],
+      [1, 0.07],
+    ];
+
+    // Replace with Catmull-Rom interpolation
+    let point = null;
+    let next_point = null;
+    for (let i = 0; i < points.length; ++i) {
+      if (points[i][0] > progress) {
+        next_point = points[i];
+        break;
+      }
+      point = points[i];
+    }
+    factor =
+      point[1] -
+      ((progress - point[0]) / (next_point[0] - point[0])) *
+        (point[1] - next_point[1]);
+
+    // 0.85 = début crawl
+
+    return (h / 1.7) * factor;
+    //
+  }
+
+  #compute_star_wars_text_opacity() {
+    const { start, stop } = this.anim.star_wars;
+    const duration = stop - start;
+    const t = this.accumulated_time - start;
+    const progress = t / duration;
+
+    if (progress >= 0.8) return 1 - (progress - 0.8) / (1 - 0.8);
+    return 1;
   }
 
   #draw_opening_crawl(delta_time) {
@@ -449,6 +543,7 @@ class StarWars extends Painter {
 
     const { xw } = this.rect;
     this.ctx.strokeStyle = "white";
+    this.ctx.lineWidth = 1;
 
     // Slopes
     this.ctx.strokeLine(
