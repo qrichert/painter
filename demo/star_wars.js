@@ -86,7 +86,6 @@ class StarWars extends Painter {
       blue: "#07e4fe",
       blue77: "#0066ff",
     };
-    this.pc_anim = 0; //TODO
     this.#init_scene();
   }
 
@@ -99,21 +98,24 @@ class StarWars extends Painter {
   }
 
   #pre_render_star_wars_logo_offscreen() {
-    const { h, cx, cy } = this.rect;
+    const { h, cx } = this.rect;
     this.#create_star_wars_offscreen_canvas();
-    const font_size = h / 2;
-    const stroke_width = font_size * 0.07;
     const txt = STAR_WARS.trim().split("\n");
-    this.star_wars_ctx.font = `bolder ${font_size}px sans-serif`;
+    const font_size = h / txt.length;
+    const stroke_width = font_size * 0.07;
+    this.star_wars_ctx.font = `bolder ${font_size * 1.17}px sans-serif`;
     this.star_wars_ctx.lineWidth = stroke_width;
     this.star_wars_ctx.textAlign = "center";
-    this.star_wars_ctx.textBaseline = "middle";
+    this.star_wars_ctx.textBaseline = "top";
     this.star_wars_ctx.strokeStyle = this.color.orange;
     this.star_wars_ctx.fillStyle = "black";
-    this.star_wars_ctx.strokeText(txt[0], cx, cy - font_size / 2.4);
-    this.star_wars_ctx.fillText(txt[0], cx, cy - font_size / 2.4);
-    this.star_wars_ctx.strokeText(txt[1], cx, cy + font_size / 2.4);
-    this.star_wars_ctx.fillText(txt[1], cx, cy + font_size / 2.4);
+    const increment = font_size - 0.05 * font_size;
+    let y = 0;
+    for (const text of txt) {
+      this.star_wars_ctx.strokeText(text, cx, y);
+      this.star_wars_ctx.fillText(text, cx, y);
+      y += increment;
+    }
   }
 
   #create_star_wars_offscreen_canvas() {
@@ -270,7 +272,6 @@ class StarWars extends Painter {
       this.color.blue = this.color.blue77;
       this.#init_scene();
       this.accumulated_time = 0;
-      this.pc_anim = 0; //TODO
     }
   }
 
@@ -546,9 +547,9 @@ class StarWars extends Painter {
     this.ctx.save();
     this.ctx.globalAlpha = opacity;
 
-    this.pc_anim = progress / depth_scaling(1); // TODO: this.accmulated_time
+    const pc_anim = progress / depth_scaling(1);
     const screen_text_bottom = this.#world_y_to_screen_y(0);
-    const screen_text_top = this.#world_y_to_screen_y(this.pc_anim);
+    const screen_text_top = this.#world_y_to_screen_y(pc_anim);
     const world_horizon = this.horizon.world.far;
 
     const nb_pixels_to_scan = screen_text_bottom - screen_text_top; //y inverted
