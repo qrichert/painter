@@ -91,10 +91,12 @@ class StarWars extends Painter {
     this.accumulated_time = 0;
     this.anim = {
       a_long_time_ago: { start: 1, stop: 7, fade: 0.5 },
-      star_wars: { start: 8, stop: 18 },
-      opening_crawl: { start: 16, stop: 90 },
+      star_wars: { start: 8, stop: 18, fade: 3 },
+      opening_crawl: { start: 16, stop: 90, fade: 3 },
       tilt: { start: 97, stop: 107 },
     };
+    // TODO: start -> end ? instead of stop?
+    // TODO adapt this.anim.opening_crawl.stop (duration) as factor of nb_text_lines
     this.color = {
       orange: "#ffbb00",
       blue: "#07e4fe",
@@ -370,14 +372,24 @@ class StarWars extends Painter {
   }
 
   #compute_a_long_time_ago_text_opacity() {
-    const { fade } = this.anim.a_long_time_ago;
-    const { duration, t } = this.#compute_animation_phase_progress(
+    // TODO: this code is repeated at least 3 times
+    const { duration, progress } = this.#compute_animation_phase_progress(
       this.anim.a_long_time_ago
     );
+    const rlerp = (a, b, t) => (t - a) / (b - a);
+    // TODO: rename
+    const fade_duration_pc = this.anim.a_long_time_ago.fade / duration;
 
-    if (t <= fade) return t / fade;
-    if (t >= duration - fade) return 1 - (t - (duration - fade)) / fade;
-    return 1;
+    // TODO: this peculiarity is only here (two fades,
+    //  maybe create two props: fade_start, fade_end)
+    let opacity = 0;
+    if (progress > 0.5) {
+      opacity =
+        1 - Math.max(Math.min(rlerp(1 - fade_duration_pc, 1, progress), 1), 0);
+    } else {
+      opacity = Math.max(Math.min(rlerp(0, fade_duration_pc, progress), 1), 0);
+    }
+    return opacity;
   }
 
   #draw_starry_night() {
@@ -386,6 +398,7 @@ class StarWars extends Painter {
   }
 
   #draw_starry_night_tilting() {
+    // TODO:smoothing function
     const { w, h, yh } = this.rect;
     const { progress } = this.#compute_animation_phase_progress(this.anim.tilt);
 
@@ -440,7 +453,7 @@ class StarWars extends Painter {
       [0.6, 0.14],
       [0.7, 0.12],
       [0.8, 0.1],
-      [0.9, 0.08],
+      [0.9, 0.083],
       [1, 0.07],
     ];
 
@@ -512,21 +525,18 @@ class StarWars extends Painter {
   }
 
   #compute_star_wars_text_opacity() {
-    const { progress } = this.#compute_animation_phase_progress(
+    const { duration, progress } = this.#compute_animation_phase_progress(
       this.anim.star_wars
     );
-    if (progress >= 0.8) return 1 - (progress - 0.8) / (1 - 0.8);
-    return 1;
+    const rlerp = (a, b, t) => (t - a) / (b - a);
+    // TODO: rename
+    const fade_duration_pc = this.anim.star_wars.fade / duration;
+    const opacity =
+      1 - Math.max(Math.min(rlerp(1 - fade_duration_pc, 1, progress), 1), 0);
+    return opacity;
   }
 
-  #draw_opening_crawl(delta_time) {
-    this.#compute_opening_crawl_horizon();
-
-    this.pc_anim += 0.16 * delta_time; // TODO: this.accmulated_time
-    const screen_text_bottom = this.#world_y_to_screen_y(0);
-    const screen_text_top = this.#world_y_to_screen_y(this.pc_anim);
-    const world_horizon = this.horizon.world.far;
-
+  #draw_opening_crawl() {
     // --m = text more condensed vertically
     // c must be big enough so ds(1)>0 (ie c > m) and small enough to
     // compensate stretch
@@ -537,6 +547,25 @@ class StarWars extends Painter {
     // nearer, the nearer the sampled lines. Sampling lines more spread
     // = less of the text rendered = appears smaller/condensed
     const depth_scaling = (x) => -0.3 * x + 0.42;
+
+    const rlerp = (a, b, t) => (t - a) / (b - a);
+    const lerp = (a, b, t) => (1 - t) * a + t * b;
+
+    this.#compute_opening_crawl_horizon();
+
+    const { duration, progress } = this.#compute_animation_phase_progress(
+      this.anim.opening_crawl
+    );
+    const fade_duration_pc = this.anim.opening_crawl.fade / duration;
+    const opacity =
+      1 - Math.max(Math.min(rlerp(1 - fade_duration_pc, 1, progress), 1), 0);
+    this.ctx.save();
+    this.ctx.globalAlpha = opacity;
+
+    this.pc_anim = progress / depth_scaling(1); // TODO: this.accmulated_time
+    const screen_text_bottom = this.#world_y_to_screen_y(0);
+    const screen_text_top = this.#world_y_to_screen_y(this.pc_anim);
+    const world_horizon = this.horizon.world.far;
 
     const nb_pixels_to_scan = screen_text_bottom - screen_text_top; //y inverted
     const scanline_height = 1 / this.rect.dpr;
@@ -572,6 +601,8 @@ class StarWars extends Painter {
         scanline_height // dh
       );
     }
+
+    this.ctx.restore();
   }
 
   #compute_opening_crawl_horizon() {
