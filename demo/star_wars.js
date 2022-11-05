@@ -1,27 +1,11 @@
-// Justify text, render to offscreen canvas
-// Context.setTransform() to skew ? Else project 3D & map
-// https://stackoverflow.com/a/3631683
-// http://www.senocular.com/flash/tutorials/transformmatrix/
-// https://html.spec.whatwg.org/multipage/canvas.html#transformations
-// https://www.w3resource.com/html5-canvas/html5-canvas-matrix-transforms.php
-
-// 3D not a good idea. It's simple to use mx+c for text borders.
-// First convert y=mx+c to x=y/m-c, because we iterate by row, start
-// at the top then go down. so to find the left/right bound of a line
-// x=y/m-c, and then bounnds are -x and +x (if we do 0 in the middle
-// coordinates)
-// Then we can iterate:
-// for y in range(top, bottom):
-//   for x in range(-boundx, +boundx)
-//     sample_pixel(x, y)
-//     put_pixel(x, y)
-// Or better performance per line, by letting canvas resize the line
-//     sample_line(0, %y_to_y, 1, %y_to_y)
-//     draw_line/image(-boundx, y, +boundx_y)
-
 const A_LONG_TIME_AGO = `
 A long time ago in a galaxy far,
 far away....
+`;
+
+const STAR_WARS = `
+STAR
+WARS
 `;
 
 let OPENING_CRAWL = `
@@ -119,16 +103,17 @@ class StarWars extends Painter {
     this.#create_star_wars_offscreen_canvas();
     const font_size = h / 2;
     const stroke_width = font_size * 0.07;
+    const txt = STAR_WARS.trim().split("\n");
     this.star_wars_ctx.font = `bolder ${font_size}px sans-serif`;
     this.star_wars_ctx.lineWidth = stroke_width;
     this.star_wars_ctx.textAlign = "center";
     this.star_wars_ctx.textBaseline = "middle";
     this.star_wars_ctx.strokeStyle = this.color.orange;
     this.star_wars_ctx.fillStyle = "black";
-    this.star_wars_ctx.strokeText("STAR", cx, cy - font_size / 2.4);
-    this.star_wars_ctx.fillText("STAR", cx, cy - font_size / 2.4);
-    this.star_wars_ctx.strokeText("WARS", cx, cy + font_size / 2.4);
-    this.star_wars_ctx.fillText("WARS", cx, cy + font_size / 2.4);
+    this.star_wars_ctx.strokeText(txt[0], cx, cy - font_size / 2.4);
+    this.star_wars_ctx.fillText(txt[0], cx, cy - font_size / 2.4);
+    this.star_wars_ctx.strokeText(txt[1], cx, cy + font_size / 2.4);
+    this.star_wars_ctx.fillText(txt[1], cx, cy + font_size / 2.4);
   }
 
   #create_star_wars_offscreen_canvas() {
@@ -549,7 +534,6 @@ class StarWars extends Painter {
     const depth_scaling = (x) => -0.3 * x + 0.42;
 
     const rlerp = (a, b, t) => (t - a) / (b - a);
-    const lerp = (a, b, t) => (1 - t) * a + t * b;
 
     this.#compute_opening_crawl_horizon();
 
