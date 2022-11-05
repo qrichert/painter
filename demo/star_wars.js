@@ -92,7 +92,8 @@ class StarWars extends Painter {
     this.anim = {
       a_long_time_ago: { start: 1, stop: 7, fade: 0.5 },
       star_wars: { start: 8, stop: 18 },
-      opening_crawl: { start: 16, stop: Infinity },
+      opening_crawl: { start: 16, stop: 90 },
+      tilt: { start: 97, stop: 107 },
     };
     this.color = {
       orange: "#ffbb00",
@@ -104,9 +105,39 @@ class StarWars extends Painter {
   }
 
   #init_scene() {
+    this.#pre_render_star_wars_logo_offscreen();
+    // this.#show_offscreen_star_wars_logo(); // Debug.
     this.#pre_render_opening_craw_text_offscreen();
     // this.#show_offscreen_text(); // Debug (try reducing text_size).
     this.#pre_render_starry_night();
+  }
+
+  #pre_render_star_wars_logo_offscreen() {
+    const { h, cx, cy } = this.rect;
+    this.#create_star_wars_offscreen_canvas();
+    const font_size = h / 2;
+    const stroke_width = font_size * 0.07;
+    this.star_wars_ctx.font = `bolder ${font_size}px sans-serif`;
+    this.star_wars_ctx.lineWidth = stroke_width;
+    this.star_wars_ctx.textAlign = "center";
+    this.star_wars_ctx.textBaseline = "middle";
+    this.star_wars_ctx.strokeStyle = this.color.orange;
+    this.star_wars_ctx.fillStyle = "black";
+    this.star_wars_ctx.strokeText("STAR", cx, cy - font_size / 2.4);
+    this.star_wars_ctx.fillText("STAR", cx, cy - font_size / 2.4);
+    this.star_wars_ctx.strokeText("WARS", cx, cy + font_size / 2.4);
+    this.star_wars_ctx.fillText("WARS", cx, cy + font_size / 2.4);
+  }
+
+  #create_star_wars_offscreen_canvas() {
+    this.star_wars_ctx = this.create_ctx();
+  }
+
+  #show_offscreen_star_wars_logo() {
+    this.html_root.replaceChild(
+      this.star_wars_ctx.canvas,
+      this.html_root.firstElementChild
+    );
   }
 
   #pre_render_opening_craw_text_offscreen() {
@@ -240,7 +271,7 @@ class StarWars extends Painter {
   }
 
   resize_event() {
-    this.#init_scene();
+    // this.#init_scene();
   }
 
   key_press_event(key) {
@@ -264,10 +295,7 @@ class StarWars extends Painter {
       this.#draw_a_long_time_ago();
     }
 
-    if (
-      this.#is_animation_phase(this.anim.star_wars) ||
-      this.#is_animation_phase(this.anim.opening_crawl)
-    ) {
+    if (this.accumulated_time >= this.anim.star_wars.start) {
       this.#draw_starry_night();
     }
 
@@ -279,9 +307,9 @@ class StarWars extends Painter {
       }
     }
 
-    // After gradient
+    // After opening crawl gradient
     if (this.#is_animation_phase(this.anim.star_wars)) {
-      this.#draw_star_wars(delta_time);
+      this.#draw_star_wars();
     }
   }
 
@@ -347,42 +375,47 @@ class StarWars extends Painter {
     this.ctx.drawImage(this.stars_ctx.canvas, 0, yh + scroll, w, h);
   }
 
-  #draw_star_wars(delta_time) {
-    const { h, cx, cy } = this.rect;
+  #draw_star_wars() {
+    const { cx, cy } = this.rect;
+    const { w, h } = this.rect;
+    const scale = this.#compute_star_wars_scale_factor();
+    const opacity = this.#compute_star_wars_text_opacity();
 
-    const font_size = this.#compute_star_wars_text_size();
-    const stroke_width = font_size * 0.07;
-    const text_opacity = this.#compute_star_wars_text_opacity();
-    this.ctx.font = `bolder ${font_size}px sans-serif`;
-    this.ctx.lineWidth = stroke_width;
-    this.ctx.textAlign = "center";
-    this.ctx.textBaseline = "middle";
-    this.ctx.strokeStyle = this.color.orange;
-    this.ctx.fillStyle = "black";
+    const width = w * scale;
+    const height = h * scale;
+    const x = cx - width / 2;
+    const y = cy - height / 2;
+
     this.ctx.save();
-    this.ctx.globalAlpha = text_opacity;
-    this.ctx.strokeText("STAR", cx, cy - font_size / 2.4);
-    this.ctx.fillText("STAR", cx, cy - font_size / 2.4);
-    this.ctx.strokeText("WARS", cx, cy + font_size / 2.4);
-    this.ctx.fillText("WARS", cx, cy + font_size / 2.4);
+    this.ctx.globalAlpha = opacity;
+    this.ctx.drawImage(this.star_wars_ctx.canvas, x, y, width, height);
     this.ctx.restore();
   }
 
-  #compute_star_wars_text_size() {
+  #compute_star_wars_scale_factor() {
     const { h } = this.rect;
     const { start, stop } = this.anim.star_wars;
     const duration = stop - start;
     const t = this.accumulated_time - start;
     const progress = t / duration;
 
-    let factor = 1;
-
     // Points found by approximative measurement (1 per second)
     // interpolate linearly
     const points = [
       [0, 1],
+      [0.004, 0.99],
+      [0.012, 0.88],
+      [0.025, 0.8],
+      [0.05, 0.7],
+      [0.075, 0.63],
       [0.1, 0.57],
-      [0.2, 0.38],
+      [0.125, 0.51],
+      [0.15, 0.46],
+      [0.175, 0.42],
+      [0.2, 0.39],
+      [0.225, 0.35],
+      [0.25, 0.33],
+      [0.275, 0.3],
       [0.3, 0.28],
       [0.4, 0.21],
       [0.5, 0.17],
@@ -393,25 +426,71 @@ class StarWars extends Painter {
       [1, 0.07],
     ];
 
-    // Replace with Catmull-Rom interpolation
-    let point = null;
-    let next_point = null;
+    let p0 = null;
+    let p1 = null;
+    let p2 = null;
+    let p3 = null;
     for (let i = 0; i < points.length; ++i) {
-      if (points[i][0] > progress) {
-        next_point = points[i];
+      if (points[i][0] > progress || i === points.length - 1) {
+        p0 = points[Math.max(i - 2, 0)];
+        p1 = points[Math.max(i - 1, 0)];
+        p2 = points[i];
+        p3 = points[Math.min(i + 1, points.length - 1)];
         break;
       }
-      point = points[i];
     }
-    factor =
-      point[1] -
-      ((progress - point[0]) / (next_point[0] - point[0])) *
-        (point[1] - next_point[1]);
 
-    // 0.85 = début crawl
+    const rlerp = (a, b, t) => (t - a) / (b - a);
+    const lin_t = rlerp(p1[0], p2[0], progress);
 
-    return (h / 1.7) * factor;
-    //
+    const factor = this.#catmull_rom(p0, p1, p2, p3, lin_t, 0.5)[1];
+    return factor;
+  }
+
+  #catmull_rom(p0, p1, p2, p3, t, alpha = 0.5) {
+    const get_t = (t, alpha, p0, p1) => {
+      const d = [p1[0] - p0[0], p1[1] - p0[1]]; // p1 - p0
+      const a = d[0] * d[0] + d[1] * d[1]; // d • d
+      const b = Math.pow(a, alpha * 0.5);
+      return b + t;
+    };
+
+    const lerp = (a, b, t) => (1 - t) * a + t * b;
+
+    const t0 = 0.0;
+    const t1 = get_t(t0, alpha, p0, p1);
+    const t2 = get_t(t1, alpha, p1, p2);
+    const t3 = get_t(t2, alpha, p2, p3);
+    t = lerp(t1, t2, t);
+
+    const vec2d_x_scalar = (v, scalar) => [v[0] * scalar, v[1] * scalar];
+    const vec2d_add = (v1, v2) => [v1[0] + v2[0], v1[1] + v2[1]];
+
+    const A1 = vec2d_add(
+      vec2d_x_scalar(p0, (t1 - t) / (t1 - t0)),
+      vec2d_x_scalar(p1, (t - t0) / (t1 - t0))
+    );
+    const A2 = vec2d_add(
+      vec2d_x_scalar(p1, (t2 - t) / (t2 - t1)),
+      vec2d_x_scalar(p2, (t - t1) / (t2 - t1))
+    );
+    const A3 = vec2d_add(
+      vec2d_x_scalar(p2, (t3 - t) / (t3 - t2)),
+      vec2d_x_scalar(p3, (t - t2) / (t3 - t2))
+    );
+    const B1 = vec2d_add(
+      vec2d_x_scalar(A1, (t2 - t) / (t2 - t0)),
+      vec2d_x_scalar(A2, (t - t0) / (t2 - t0))
+    );
+    const B2 = vec2d_add(
+      vec2d_x_scalar(A2, (t3 - t) / (t3 - t1)),
+      vec2d_x_scalar(A3, (t - t1) / (t3 - t1))
+    );
+    const C = vec2d_add(
+      vec2d_x_scalar(B1, (t2 - t) / (t2 - t1)),
+      vec2d_x_scalar(B2, (t - t1) / (t2 - t1))
+    );
+    return C;
   }
 
   #compute_star_wars_text_opacity() {
