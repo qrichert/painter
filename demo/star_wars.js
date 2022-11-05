@@ -271,6 +271,7 @@ class StarWars extends Painter {
   }
 
   resize_event() {
+    // TODO: DOMContentLoaded -> Load so it doesn't fire before setup()
     // this.#init_scene();
   }
 
@@ -296,7 +297,11 @@ class StarWars extends Painter {
     }
 
     if (this.accumulated_time >= this.anim.star_wars.start) {
-      this.#draw_starry_night();
+      if (this.#is_animation_phase(this.anim.tilt)) {
+        this.#draw_starry_night_tilting();
+      } else {
+        this.#draw_starry_night();
+      }
     }
 
     if (this.#is_animation_phase(this.anim.opening_crawl)) {
@@ -322,6 +327,15 @@ class StarWars extends Painter {
     return (
       this.accumulated_time >= phase.start && this.accumulated_time < phase.stop
     );
+  }
+
+  #compute_animation_phase_progress(phase) {
+    const { start, stop } = phase;
+    const duration = stop - start;
+    const t = this.accumulated_time - start;
+    const progress = t / duration;
+
+    return { duration, t, progress };
   }
 
   #draw_a_long_time_ago() {
@@ -356,9 +370,10 @@ class StarWars extends Painter {
   }
 
   #compute_a_long_time_ago_text_opacity() {
-    const { start, stop, fade } = this.anim.a_long_time_ago;
-    const duration = stop - start;
-    const t = this.accumulated_time - start;
+    const { fade } = this.anim.a_long_time_ago;
+    const { duration, t } = this.#compute_animation_phase_progress(
+      this.anim.a_long_time_ago
+    );
 
     if (t <= fade) return t / fade;
     if (t >= duration - fade) return 1 - (t - (duration - fade)) / fade;
@@ -366,13 +381,18 @@ class StarWars extends Painter {
   }
 
   #draw_starry_night() {
-    // TODO
+    const { w, h } = this.rect;
+    this.ctx.drawImage(this.stars_ctx.canvas, 0, 0, w, h);
+  }
+
+  #draw_starry_night_tilting() {
     const { w, h, yh } = this.rect;
-    // const scroll = -this.pc_anim * 0.4 * h;
-    const scroll = 0;
-    this.ctx.drawImage(this.stars_ctx.canvas, 0, scroll, w, h);
-    // Repeat it underneath for vpan.
-    this.ctx.drawImage(this.stars_ctx.canvas, 0, yh + scroll, w, h);
+    const { progress } = this.#compute_animation_phase_progress(this.anim.tilt);
+
+    const offset = -progress * h;
+    this.ctx.drawImage(this.stars_ctx.canvas, 0, offset, w, h);
+    // Stick same image underneath to compensate offset.
+    this.ctx.drawImage(this.stars_ctx.canvas, 0, yh + offset, w, h);
   }
 
   #draw_star_wars() {
@@ -393,11 +413,9 @@ class StarWars extends Painter {
   }
 
   #compute_star_wars_scale_factor() {
-    const { h } = this.rect;
-    const { start, stop } = this.anim.star_wars;
-    const duration = stop - start;
-    const t = this.accumulated_time - start;
-    const progress = t / duration;
+    const { progress } = this.#compute_animation_phase_progress(
+      this.anim.star_wars
+    );
 
     // Points found by approximative measurement (1 per second)
     // interpolate linearly
@@ -494,11 +512,9 @@ class StarWars extends Painter {
   }
 
   #compute_star_wars_text_opacity() {
-    const { start, stop } = this.anim.star_wars;
-    const duration = stop - start;
-    const t = this.accumulated_time - start;
-    const progress = t / duration;
-
+    const { progress } = this.#compute_animation_phase_progress(
+      this.anim.star_wars
+    );
     if (progress >= 0.8) return 1 - (progress - 0.8) / (1 - 0.8);
     return 1;
   }
