@@ -1,7 +1,7 @@
 # Painter
 
-Painter is a barebones drawing toolkit for HTML5 canvas. It takes away
-a lot of boilerplate code, like setting up the canvas, creating the game
+Painter is a barebones drawing toolkit for HTML5 canvas. It takes away a
+lot of boilerplate code, like setting up the canvas, creating the game
 loop, listening for events, etc.
 
 ## Overview
@@ -19,14 +19,14 @@ There are two base functions you can edit: `setup()` and `render()`.
   amount of time elapsed since last `render()`, in fractional seconds
   (used to decorrelate animation speed from frame rate).
 
-In addition, there are many (optional) helper methods and properties
-you can use. Read through `painter.js` and look at the [`demo/`](/demo/)
+In addition, there are many (optional) helper methods and properties you
+can use. Read through `painter.js` and look at the [`demo/`](/demo/)
 directory to get a feel for what is available.
 
 ## Quick Start
 
-Open `main.js` and edit the demo code to draw a 70×70px red square
-at the center top of the screen.
+Open `main.js` and edit the demo code to draw a 70×70px red square at
+the center top of the screen.
 
 ```javascript
 class App extends Painter {
@@ -99,8 +99,8 @@ A few things to note:
   falls out on the bottom. This condition uses `yh`, another helper
   property of `Rect`, shorthand for `y + h` (= bottom).
 
-Now try and tweak it a little to use gravity (acceleration) instead of
-a constant speed. Also, try and find a way to pause the simulation by
+Now try and tweak it a little to use gravity (acceleration) instead of a
+constant speed. Also, try and find a way to pause the simulation by
 hitting the space key (hint: you can overload `key_press_event(key)`).
 
 (Solution included in next step).
@@ -167,8 +167,8 @@ class App extends Painter {
 
 A few things to note:
 
-- `key_press_event(key)` is one of many helper event handlers. Look
-  at `painter.js` for more (resize, mouse, keyboard, wheel, etc.)
+- `key_press_event(key)` is one of many helper event handlers. Look at
+  `painter.js` for more (resize, mouse, keyboard, wheel, etc.)
 - `this.mouse` works similarly to `this.rect`, but contains info about
   the current state of the mouse. There is also `this.keyboard` for the
   keyboard.

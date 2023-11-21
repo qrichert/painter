@@ -259,7 +259,7 @@ class _Keyboard {
     }
     this.keys_pressed.push(key);
     this.parent.dispatchEvent(
-      new CustomEvent("_keypress", { detail: { key } })
+      new CustomEvent("_keypress", { detail: { key } }),
     );
   }
 
@@ -267,7 +267,7 @@ class _Keyboard {
     key = this.#convert_special_key_to_standard_key(key);
     this.keys_pressed = this.keys_pressed.filter((x) => x !== key);
     this.parent.dispatchEvent(
-      new CustomEvent("_keyrelease", { detail: { key } })
+      new CustomEvent("_keyrelease", { detail: { key } }),
     );
   }
 
@@ -342,7 +342,9 @@ class _PixelContext {
    * @returns {Number}
    */
   get width() {
-    return this._buffer && Math.ceil(this._buffer.width / this.pixelSize);
+    return (
+      this._buffer && Math.ceil(this._buffer.width / this.pixelSize)
+    );
   }
 
   /**
@@ -351,7 +353,9 @@ class _PixelContext {
    * @returns {Number}
    */
   get height() {
-    return this._buffer && Math.ceil(this._buffer.height / this.pixelSize);
+    return (
+      this._buffer && Math.ceil(this._buffer.height / this.pixelSize)
+    );
   }
 
   /**
@@ -416,7 +420,7 @@ class _PixelContext {
     return new ImageData(
       new Uint8ClampedArray(buffer.data),
       buffer.width,
-      buffer.height
+      buffer.height,
     );
   }
 
@@ -430,7 +434,8 @@ class _PixelContext {
   getPixel(x, y) {
     const { data, width, height } = this._buffer;
     [x, y] = this.worldToScreen(x, y);
-    if (x < 0 || x >= width || y < 0 || y >= height) return [0, 0, 0, 0];
+    if (x < 0 || x >= width || y < 0 || y >= height)
+      return [0, 0, 0, 0];
     const i = (y * width + x) * 4;
     return [data[i + 0], data[i + 1], data[i + 2], data[i + 3]];
   }
@@ -621,7 +626,7 @@ class Painter {
       from_x,
       from_y,
       to_x,
-      to_y
+      to_y,
     );
 
     ctx.beginPath();
@@ -706,13 +711,18 @@ class Painter {
         e.offsetX,
         e.offsetY,
         e.movementX,
-        e.movementY
+        e.movementY,
       );
     });
     this.html_root.addEventListener(
       "wheel",
       (e) => {
-        this.#wheel_event_handler(e.offsetX, e.offsetY, e.deltaX, e.deltaY);
+        this.#wheel_event_handler(
+          e.offsetX,
+          e.offsetY,
+          e.deltaX,
+          e.deltaY,
+        );
       },
       { passive: true },
     );

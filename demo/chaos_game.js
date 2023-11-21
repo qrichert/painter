@@ -182,7 +182,7 @@ class ChaosGame extends Painter {
     this.ctx.fillCircle(
       cx + this.current_point.x * this.scale,
       cy + this.current_point.y * this.scale,
-      this.point_radius
+      this.point_radius,
     );
   }
 
@@ -201,13 +201,15 @@ class ChaosGame extends Painter {
       "[-] 1/--n",
       "[g] golden ratio",
       "",
-      `[.] never same vertex twice ${this.never_same_vertex_twice ? "*" : " "}`,
+      `[.] never same vertex twice ${
+        this.never_same_vertex_twice ? "*" : " "
+      }`,
       "",
       "[space] restart",
     ];
     const max_text_width = text.reduce(
       (max, str) => Math.max(max, this.ctx.textWidth(str)),
-      0
+      0,
     );
     const pos = (i) => [
       10,
@@ -220,7 +222,7 @@ class ChaosGame extends Painter {
       0,
       max_text_width + 20,
       (text.length + 2) * this.font_size +
-        ((text.length - 1) * this.font_size) / 4
+        ((text.length - 1) * this.font_size) / 4,
     );
 
     this.ctx.fillStyle = "grey";
