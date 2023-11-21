@@ -117,10 +117,9 @@ class ScreenSaver extends Painter {
   }
 
   #draw_background() {
-    const { x, y, w, h } = this.rect;
     const opacity = this.#determine_background_opacity();
     this.ctx.fillStyle = `rgba(0, 0, 0, ${opacity})`;
-    this.ctx.fillRect(x, y, w, h);
+    this.ctx.fillScreen();
   }
 
   #determine_background_opacity() {
