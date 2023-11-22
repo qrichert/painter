@@ -1,8 +1,14 @@
 if (!Number.prototype.mod) {
+  // Modulo.
   Number.prototype.mod = function (n) {
     "use strict";
     return ((this % n) + n) % n;
   };
+}
+
+if (!Math.PHI) {
+  // Golden ratio.
+  Math.PHI = (1 + Math.sqrt(5)) / 2;
 }
 
 /**
@@ -525,6 +531,8 @@ const ScrollDirection = {
  *   + ctx.strokeLine(from_x, from_y, to_x, to_y) : void
  *   + ctx.strokeCircle(x, y, r) : void
  *   + ctx.fillCircle(x, y, r) : void
+ *   + ctx.strokeTriangle(x1, y1, x2, y2, x3, y3) : void
+ *   + ctx.fillTriangle(x1, y1, x2, y2, x3, y3) : void
  *   + ctx.textWidth(text) : Number
  *   + resize_event() : void
  *   + mouse_press_event(x, y) : void
@@ -599,6 +607,16 @@ class Painter {
     if (!ctx.fillCircle) {
       ctx.fillCircle = (x, y, r) => {
         this.#fill_circle(ctx, x, y, r);
+      };
+    }
+    if (!this.ctx.strokeTriangle) {
+      this.ctx.strokeTriangle = (x1, y1, x2, y2, x3, y3) => {
+        this.#stroke_triangle(x1, y1, x2, y2, x3, y3);
+      };
+    }
+    if (!this.ctx.fillTriangle) {
+      this.ctx.fillTriangle = (x1, y1, x2, y2, x3, y3) => {
+        this.#fill_triangle(x1, y1, x2, y2, x3, y3);
       };
     }
     if (!ctx.textWidth) {
@@ -684,6 +702,24 @@ class Painter {
 
   #text_width(ctx, text) {
     return ctx.measureText(text).width;
+  }
+
+  #stroke_triangle(x1, y1, x2, y2, x3, y3) {
+    this.ctx.beginPath();
+    this.ctx.moveTo(x1, y1);
+    this.ctx.lineTo(x2, y2);
+    this.ctx.lineTo(x3, y3);
+    this.ctx.closePath();
+    this.ctx.stroke();
+  }
+
+  #fill_triangle(x1, y1, x2, y2, x3, y3) {
+    this.ctx.beginPath();
+    this.ctx.moveTo(x1, y1);
+    this.ctx.lineTo(x2, y2);
+    this.ctx.lineTo(x3, y3);
+    this.ctx.closePath();
+    this.ctx.fill();
   }
 
   #set_up_event_handlers() {
