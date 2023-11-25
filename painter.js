@@ -11,6 +11,12 @@ if (!Math.PHI) {
   Math.PHI = (1 + Math.sqrt(5)) / 2;
 }
 
+if (!Array.prototype.shuffle) {
+  Array.prototype.shuffle = function () {
+    return this.sort(() => Math.random() - 0.5);
+  };
+}
+
 /**
  * @startuml
  * class Rect {

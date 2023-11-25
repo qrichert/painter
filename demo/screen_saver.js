@@ -9,8 +9,8 @@ class ScreenSaver extends Painter {
     this.nb_lines = 3;
     this.#create_points();
     this.hue = 360 * this.#rand();
-    this.accumulated_time = 0;
     this.fix_delta_time = 0.033; // Fix, so lines are spaced evenly.
+    this.accumulated_time = this.fix_delta_time; // Render immediately.
     this.interpolation = ScreenSaverInterpolation.Fade;
     this.saturation = 70;
     this.ctx.canvas.style.backgroundColor = "black";
