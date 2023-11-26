@@ -139,7 +139,7 @@ class Rect {
 
 /**
  * @startuml
- * class Mouse {
+ * class _Mouse {
  *   + x : Number
  *   + y : Number
  *   + is_pressed : Boolean
@@ -214,7 +214,7 @@ class _Mouse {
 
 /**
  * @startuml
- * class Keyboard {
+ * class _Keyboard {
  *   + keys_pressed : String[]
  *   + is_key_pressed(key) : Boolean
  * }
@@ -301,6 +301,7 @@ class _Keyboard {
  *   + height : Number
  *   + trueWidth : Number
  *   + trueHeight : Number
+ *   + setContext(ctx) : void
  *   + getBuffer() : ImageData
  *   + refreshBuffer() : void
  *   + setBuffer(buffer) : void
@@ -386,6 +387,20 @@ class _PixelContext {
    */
   get trueHeight() {
     return this._buffer && this._buffer.height / this.pixelSize;
+  }
+
+  /**
+   * Set context to use.
+   *
+   * Works well with `Painter::create_ctx()`.
+   *
+   * This is the exact same as doing `this.pxctx.ctx = ctx`, but it
+   * makes it clear this is a possibility.
+   *
+   * @param {CanvasRenderingContext2D} ctx
+   */
+  setContext(ctx) {
+    this.ctx = ctx;
   }
 
   /**
