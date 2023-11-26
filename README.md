@@ -4,6 +4,17 @@ Painter is a bare-bones drawing toolkit for HTML5 canvas. It takes away
 a lot of boilerplate code, like setting up the canvas, creating the game
 loop, listening for events, etc.
 
+## Demo
+
+<p align="center">
+  <img src="./screenshots/chaos_game.png" alt="Chaos Game" style="width: 31%;" />
+  <img src="./screenshots/game_of_life.png" alt="Conway's Game of Life" style="width: 31%;" />
+  <img src="./screenshots/star_wars.png" alt="Star Wars" style="width: 31%;" />
+  <img src="./screenshots/3d_engine.png" alt="3D Engine" style="width: 31%;" />
+  <img src="./screenshots/matrix.png" alt="Matrix" style="width: 31%;" />
+  <img src="./screenshots/particle_rain.png" alt="Particle Rain" style="width: 31%;" />
+</p>
+
 ## Overview
 
 Open `index.html` in your browser and `main.js` in a code editor. That's
