@@ -13,6 +13,7 @@ loop, listening for events, etc.
   <img src="./screenshots/3d_engine.png" alt="3D Engine" style="width: 31%;" />
   <img src="./screenshots/matrix.png" alt="Matrix" style="width: 31%;" />
   <img src="./screenshots/particle_rain.png" alt="Particle Rain" style="width: 31%;" />
+  <img src="./screenshots/platform_game.png" alt="Platform Game" style="width: 31%;" />
 </p>
 
 ## Overview
