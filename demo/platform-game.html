@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Platform Game</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
+    />
+    <style>
+      html,
+      body {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+      #root {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("./platform-game/assets/Pixel Adventure/Background/Blue.png");
+        background-repeat: repeat;
+      }
+      #root.upside-down {
+        transform: rotate(180deg);
+      }
+      img {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- World -->
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Terrain/Terrain%20(16x16).png"
+      alt="Terrain"
+      id="terrain"
+    />
+    <!-- Fruits -->
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Items/Fruits/Apple.png"
+      alt="Fruit - Apple"
+      id="fruit-apple"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Items/Fruits/Bananas.png"
+      alt="Fruit - Bananas"
+      id="fruit-bananas"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Items/Fruits/Cherries.png"
+      alt="Fruit - Cherries"
+      id="fruit-cherries"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Items/Fruits/Kiwi.png"
+      alt="Fruit - Kiwi"
+      id="fruit-kiwi"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Items/Fruits/Melon.png"
+      alt="Fruit - Melon"
+      id="fruit-melon"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Items/Fruits/Orange.png"
+      alt="Fruit - Orange"
+      id="fruit-orange"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Items/Fruits/Pineapple.png"
+      alt="Fruit - Pineapple"
+      id="fruit-pineapple"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Items/Fruits/Strawberry.png"
+      alt="Fruit - Strawberry"
+      id="fruit-strawberry"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Items/Fruits/Collected.png"
+      alt="Fruit - Collected"
+      id="fruit-collected"
+    />
+    <!-- Props -->
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Other/Dust%20Particle.png"
+      alt="Props - Dust Particle"
+      id="props-dust-particle"
+    />
+    <!-- Enemies -->
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Enemies/Slime/Idle-Run%20(44x30).png"
+      alt="Enemy - Slime - Idle-Run"
+      id="enemy-slime-idle-run"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Enemies/Slime/Hit%20(44x30).png"
+      alt="Enemy - Slime - Hit"
+      id="enemy-slime-hit"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Enemies/Slime/Particles%20(62x16).png"
+      alt="Enemy - Slime - Particles"
+      id="enemy-slime-particles"
+    />
+    <!-- Hero -->
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Appearing%20(96x96).png"
+      alt="Hero - Appearing"
+      id="hero-appearing"
+    />
+    <!-- Hero - Ninja Frog -->
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Ninja%20Frog/Idle%20(32x32).png"
+      alt="Hero - Idle"
+      id="hero-ninja-frog-idle"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Ninja%20Frog/Run%20(32x32).png"
+      alt="Hero - Run"
+      id="hero-ninja-frog-run"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Ninja%20Frog/Jump%20(32x32).png"
+      alt="Hero - Jump"
+      id="hero-ninja-frog-jump"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Ninja%20Frog/Double%20Jump%20(32x32).png"
+      alt="Hero - Double Jump"
+      id="hero-ninja-frog-double-jump"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Ninja%20Frog/Wall%20Jump%20(32x32).png"
+      alt="Hero - Wall Jump"
+      id="hero-ninja-frog-wall-jump"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Ninja%20Frog/Fall%20(32x32).png"
+      alt="Hero - Fall"
+      id="hero-ninja-frog-fall"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Ninja%20Frog/Hit%20(32x32).png"
+      alt="Hero - Hit"
+      id="hero-ninja-frog-hit"
+    />
+    <!-- Hero - Pink Man -->
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Pink%20Man/Idle%20(32x32).png"
+      alt="Hero - Idle"
+      id="hero-pink-man-idle"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Pink%20Man/Run%20(32x32).png"
+      alt="Hero - Run"
+      id="hero-pink-man-run"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Pink%20Man/Jump%20(32x32).png"
+      alt="Hero - Jump"
+      id="hero-pink-man-jump"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Pink%20Man/Double%20Jump%20(32x32).png"
+      alt="Hero - Double Jump"
+      id="hero-pink-man-double-jump"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Pink%20Man/Wall%20Jump%20(32x32).png"
+      alt="Hero - Wall Jump"
+      id="hero-pink-man-wall-jump"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Pink%20Man/Fall%20(32x32).png"
+      alt="Hero - Fall"
+      id="hero-pink-man-fall"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Pink%20Man/Hit%20(32x32).png"
+      alt="Hero - Hit"
+      id="hero-pink-man-hit"
+    />
+    <!-- Hero - Mask Dude -->
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Mask%20Dude/Idle%20(32x32).png"
+      alt="Hero - Idle"
+      id="hero-mask-dude-idle"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Mask%20Dude/Run%20(32x32).png"
+      alt="Hero - Run"
+      id="hero-mask-dude-run"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Mask%20Dude/Jump%20(32x32).png"
+      alt="Hero - Jump"
+      id="hero-mask-dude-jump"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Mask%20Dude/Double%20Jump%20(32x32).png"
+      alt="Hero - Double Jump"
+      id="hero-mask-dude-double-jump"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Mask%20Dude/Wall%20Jump%20(32x32).png"
+      alt="Hero - Wall Jump"
+      id="hero-mask-dude-wall-jump"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Mask%20Dude/Fall%20(32x32).png"
+      alt="Hero - Fall"
+      id="hero-mask-dude-fall"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Mask%20Dude/Hit%20(32x32).png"
+      alt="Hero - Hit"
+      id="hero-mask-dude-hit"
+    />
+    <!-- Hero - Virtual Guy -->
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Virtual%20Guy/Idle%20(32x32).png"
+      alt="Hero - Idle"
+      id="hero-virtual-guy-idle"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Virtual%20Guy/Run%20(32x32).png"
+      alt="Hero - Run"
+      id="hero-virtual-guy-run"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Virtual%20Guy/Jump%20(32x32).png"
+      alt="Hero - Jump"
+      id="hero-virtual-guy-jump"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Virtual%20Guy/Double%20Jump%20(32x32).png"
+      alt="Hero - Double Jump"
+      id="hero-virtual-guy-double-jump"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Virtual%20Guy/Wall%20Jump%20(32x32).png"
+      alt="Hero - Wall Jump"
+      id="hero-virtual-guy-wall-jump"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Virtual%20Guy/Fall%20(32x32).png"
+      alt="Hero - Fall"
+      id="hero-virtual-guy-fall"
+    />
+    <img
+      src="./platform-game/assets/Pixel%20Adventure/Main%20Characters/Virtual%20Guy/Hit%20(32x32).png"
+      alt="Hero - Hit"
+      id="hero-virtual-guy-hit"
+    />
+
+    <div id="root"></div>
+    <script src="../painter.js"></script>
+    <script src="../utils.js"></script>
+    <script src="./platform-game/game.js"></script>
+    <script src="./platform-game/physics.js"></script>
+    <script src="./platform-game/drawables.js"></script>
+    <script src="./platform-game/collisions.js"></script>
+    <script src="./platform-game/terrain.js"></script>
+    <script src="./platform-game/collectibles.js"></script>
+    <script src="./platform-game/particles.js"></script>
+    <script src="./platform-game/characters.js"></script>
+    <script src="./platform-game/collision-behaviour.js"></script>
+    <script src="./platform-game/io.js"></script>
+    <script src="platform-game.js"></script>
+  </body>
+</html>
