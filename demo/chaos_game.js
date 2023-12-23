@@ -201,9 +201,7 @@ class ChaosGame extends Painter {
       "[-] 1/--n",
       "[g] golden ratio",
       "",
-      `[.] never same vertex twice ${
-        this.never_same_vertex_twice ? "*" : " "
-      }`,
+      `[.] never same vertex twice ${this.never_same_vertex_twice ? "*" : " "}`,
       "",
       "[space] restart",
     ];

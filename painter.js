@@ -355,9 +355,7 @@ class _PixelContext {
    * @returns {Number}
    */
   get width() {
-    return (
-      this._buffer && Math.ceil(this._buffer.width / this.pixelSize)
-    );
+    return this._buffer && Math.ceil(this._buffer.width / this.pixelSize);
   }
 
   /**
@@ -366,9 +364,7 @@ class _PixelContext {
    * @returns {Number}
    */
   get height() {
-    return (
-      this._buffer && Math.ceil(this._buffer.height / this.pixelSize)
-    );
+    return this._buffer && Math.ceil(this._buffer.height / this.pixelSize);
   }
 
   /**
@@ -461,8 +457,7 @@ class _PixelContext {
   getPixel(x, y) {
     const { data, width, height } = this._buffer;
     [x, y] = this.worldToScreen(x, y);
-    if (x < 0 || x >= width || y < 0 || y >= height)
-      return [0, 0, 0, 0];
+    if (x < 0 || x >= width || y < 0 || y >= height) return [0, 0, 0, 0];
     const i = (y * width + x) * 4;
     return [data[i + 0], data[i + 1], data[i + 2], data[i + 3]];
   }
@@ -774,12 +769,7 @@ class Painter {
     this.html_root.addEventListener(
       "wheel",
       (e) => {
-        this.#wheel_event_handler(
-          e.offsetX,
-          e.offsetY,
-          e.deltaX,
-          e.deltaY,
-        );
+        this.#wheel_event_handler(e.offsetX, e.offsetY, e.deltaX, e.deltaY);
       },
       { passive: true },
     );

@@ -87,9 +87,7 @@ class ScreenSaver extends Painter {
   }
 
   #update_points_in_screen_space() {
-    this.screen_points = this.points.map((p) =>
-      this.#world_to_screen(p),
-    );
+    this.screen_points = this.points.map((p) => this.#world_to_screen(p));
   }
 
   #world_to_screen(p) {

@@ -150,10 +150,7 @@ class StarWars extends Painter {
     this.#apply_font_style_to_ctx(this.ctx);
     this.text_width = 0;
     for (const line of this.text) {
-      this.text_width = Math.max(
-        this.text_width,
-        this.ctx.textWidth(line),
-      );
+      this.text_width = Math.max(this.text_width, this.ctx.textWidth(line));
     }
   }
 
@@ -192,8 +189,7 @@ class StarWars extends Painter {
   }
 
   #line_is_heading(i) {
-    const text_has_heading =
-      this.text.length > 3 && this.text[2] === "";
+    const text_has_heading = this.text.length > 3 && this.text[2] === "";
     return text_has_heading && i < 2;
   }
 
@@ -222,9 +218,7 @@ class StarWars extends Painter {
   }
 
   #determine_spacing_between_words(words) {
-    const line_width_without_spaces = this.text_ctx.textWidth(
-      words.join(""),
-    );
+    const line_width_without_spaces = this.text_ctx.textWidth(words.join(""));
     const spacing = this.text_width - line_width_without_spaces;
     return spacing / (words.length - 1);
   }
@@ -324,8 +318,7 @@ class StarWars extends Painter {
 
   #is_animation_phase(phase) {
     return (
-      this.accumulated_time >= phase.start &&
-      this.accumulated_time < phase.stop
+      this.accumulated_time >= phase.start && this.accumulated_time < phase.stop
     );
   }
 
@@ -369,23 +362,17 @@ class StarWars extends Painter {
   }
 
   #compute_a_long_time_ago_text_opacity() {
-    const { duration, progress } =
-      this.#compute_animation_phase_progress(this.anim.a_long_time_ago);
+    const { duration, progress } = this.#compute_animation_phase_progress(
+      this.anim.a_long_time_ago,
+    );
     const fade_duration_pc = this.anim.a_long_time_ago.fade / duration;
 
     let opacity = 0;
     if (progress > 0.5) {
       opacity =
-        1 -
-        Math.max(
-          Math.min(rlerp(1 - fade_duration_pc, 1, progress), 1),
-          0,
-        );
+        1 - Math.max(Math.min(rlerp(1 - fade_duration_pc, 1, progress), 1), 0);
     } else {
-      opacity = Math.max(
-        Math.min(rlerp(0, fade_duration_pc, progress), 1),
-        0,
-      );
+      opacity = Math.max(Math.min(rlerp(0, fade_duration_pc, progress), 1), 0);
     }
     return opacity;
   }
@@ -397,9 +384,7 @@ class StarWars extends Painter {
 
   #draw_starry_night_tilting() {
     const { w, h, yh } = this.rect;
-    const { progress } = this.#compute_animation_phase_progress(
-      this.anim.tilt,
-    );
+    const { progress } = this.#compute_animation_phase_progress(this.anim.tilt);
 
     const offset = -progress * h;
     this.ctx.drawImage(this.stars_ctx.canvas, 0, offset, w, h);
@@ -492,10 +477,7 @@ class StarWars extends Painter {
     const t3 = get_t(t2, alpha, p2, p3);
     t = lerp(t1, t2, t);
 
-    const vec2d_x_scalar = (v, scalar) => [
-      v[0] * scalar,
-      v[1] * scalar,
-    ];
+    const vec2d_x_scalar = (v, scalar) => [v[0] * scalar, v[1] * scalar];
     const vec2d_add = (v1, v2) => [v1[0] + v2[0], v1[1] + v2[1]];
 
     const A1 = vec2d_add(
@@ -526,15 +508,12 @@ class StarWars extends Painter {
   }
 
   #compute_star_wars_text_opacity() {
-    const { duration, progress } =
-      this.#compute_animation_phase_progress(this.anim.star_wars);
+    const { duration, progress } = this.#compute_animation_phase_progress(
+      this.anim.star_wars,
+    );
     const fade_duration_pc = this.anim.star_wars.fade / duration;
     const opacity =
-      1 -
-      Math.max(
-        Math.min(rlerp(1 - fade_duration_pc, 1, progress), 1),
-        0,
-      );
+      1 - Math.max(Math.min(rlerp(1 - fade_duration_pc, 1, progress), 1), 0);
     return opacity;
   }
 
@@ -578,15 +557,12 @@ class StarWars extends Painter {
 
     this.#compute_opening_crawl_horizon();
 
-    const { duration, progress } =
-      this.#compute_animation_phase_progress(this.anim.opening_crawl);
+    const { duration, progress } = this.#compute_animation_phase_progress(
+      this.anim.opening_crawl,
+    );
     const fade_duration_pc = this.anim.opening_crawl.fade / duration;
     const opacity =
-      1 -
-      Math.max(
-        Math.min(rlerp(1 - fade_duration_pc, 1, progress), 1),
-        0,
-      );
+      1 - Math.max(Math.min(rlerp(1 - fade_duration_pc, 1, progress), 1), 0);
     this.ctx.save();
     this.ctx.globalAlpha = opacity;
 
@@ -629,9 +605,7 @@ class StarWars extends Painter {
       const z_scale = depth_scaling(world_z);
 
       const { x_left, x_right } =
-        this.#compute_opening_crawl_screen_bounds_for_world_y(
-          world_row_y,
-        );
+        this.#compute_opening_crawl_screen_bounds_for_world_y(world_row_y);
       const x_width = x_right - x_left;
       const screen_y = this.#world_y_to_screen_y(world_row_y);
 

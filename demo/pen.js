@@ -87,9 +87,7 @@ class Pen extends Painter {
   }
 
   #draw_path_quadratic() {
-    this.interpolated_points = this.#interpolate_points_quadratic(
-      this.points,
-    );
+    this.interpolated_points = this.#interpolate_points_quadratic(this.points);
     this.ctx.strokeStyle = "black";
     this.ctx.beginPath();
     for (let i = 0; i < this.interpolated_points.length; ++i) {
@@ -331,10 +329,7 @@ class Pen extends Painter {
 
     this.ctx.fillStyle = "black";
     let i = 0;
-    this.ctx.fillText(
-      `Interpolation: ${this.interpolation}`,
-      ...pos(++i),
-    );
+    this.ctx.fillText(`Interpolation: ${this.interpolation}`, ...pos(++i));
     for (const interpolation in PenInterpolation) {
       ++i;
       this.ctx.fillText("* " + interpolation, ...pos(i));

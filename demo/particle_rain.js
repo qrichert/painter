@@ -87,13 +87,7 @@ function perceived_luminance(red, green, blue) {
  * @param {number} target_max
  * @returns {number}
  */
-function linear_scale(
-  value,
-  source_min,
-  source_max,
-  target_min,
-  target_max,
-) {
+function linear_scale(value, source_min, source_max, target_min, target_max) {
   return (
     ((value - source_min) / (source_max - source_min)) *
       (target_max - target_min) +
@@ -130,10 +124,7 @@ class ParticleRain extends Painter {
     this.particles = [];
     for (let i = 0; i < nb_particles; ++i) {
       this.particles.push(
-        new Particle(
-          Math.random() * this.rect.w,
-          Math.random() * this.rect.h,
-        ),
+        new Particle(Math.random() * this.rect.w, Math.random() * this.rect.h),
       );
     }
   }

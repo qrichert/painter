@@ -51,10 +51,7 @@ class Stream {
     while (chars.length < this.stream_length) {
       const nb_missing_chars = this.stream_length - chars.length;
       chars.push(
-        ...chars_pool.slice(
-          0,
-          Math.min(nb_missing_chars, chars_pool.length),
-        ),
+        ...chars_pool.slice(0, Math.min(nb_missing_chars, chars_pool.length)),
       );
     }
     if (chars.length !== this.stream_length) {
@@ -87,8 +84,7 @@ class Stream {
     for (let i = slice_start; i < slice_end; ++i) {
       this.ctx.fillStyle = COLOR;
       if (this.#is_first_char(i)) this.ctx.fillStyle = COLOR_BRIGHT;
-      else if (this.#is_second_char(i))
-        this.ctx.fillStyle = COLOR_LESS_BRIGHT;
+      else if (this.#is_second_char(i)) this.ctx.fillStyle = COLOR_LESS_BRIGHT;
       else if (this.#is_third_char(i))
         this.ctx.fillStyle = COLOR_LESS_LESS_BRIGHT;
 
@@ -126,9 +122,7 @@ class Stream {
   }
 
   #get_random_char() {
-    return MATRIX_CHARS[
-      Math.floor(Math.random() * MATRIX_CHARS.length)
-    ];
+    return MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
   }
 
   /**
@@ -256,9 +250,7 @@ class Matrix extends Painter {
     this.streams = [];
     const nb_streams = Math.ceil(this.rect.w / this.char_width);
     for (let i = 0; i < nb_streams; ++i) {
-      this.streams.push(
-        new Stream(this, i * this.char_width, this.char_width),
-      );
+      this.streams.push(new Stream(this, i * this.char_width, this.char_width));
     }
   }
 

@@ -637,10 +637,7 @@ class Camera {
         vertex[2] = z;
       }
     });
-    if (
-      !this.parent.show_culled_triangles ||
-      this.parent.show_shading
-    ) {
+    if (!this.parent.show_culled_triangles || this.parent.show_shading) {
       projected_model.mesh.cull_triangles_facing_away();
     }
     projected_model.mesh.sort_triangles_by_depth();
@@ -770,8 +767,7 @@ class App extends Painter {
     if (this.keyboard.is_key_pressed("ArrowUp")) rx -= 7 * delta_time;
     if (this.keyboard.is_key_pressed("ArrowDown")) rx += 7 * delta_time;
     if (this.keyboard.is_key_pressed("ArrowLeft")) ry -= 7 * delta_time;
-    if (this.keyboard.is_key_pressed("ArrowRight"))
-      ry += 7 * delta_time;
+    if (this.keyboard.is_key_pressed("ArrowRight")) ry += 7 * delta_time;
     if (this.keyboard.is_key_pressed("=")) rz -= 7 * delta_time;
     if (this.keyboard.is_key_pressed(":")) rz += 7 * delta_time;
     if (this.keyboard.is_key_pressed("o")) sx -= 7 * delta_time;
