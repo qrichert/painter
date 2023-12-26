@@ -535,6 +535,217 @@ const ScrollDirection = {
 
 /**
  * @startuml
+ * class _Debug {
+ *   + delta_time : Number
+ *   + render_time : Number
+ * }
+ * @enduml
+ */
+class _Debug {
+  constructor() {
+    this.delta_time = 0;
+    this.render_time = 0;
+  }
+}
+
+/**
+ * Moving Average.
+ *
+ * Works like an array you can push to indefinitely.
+ * It will only hold the last X (length) values.
+ * The ``average`` property holds the current average.
+ *
+ * @startuml
+ * class MovingAverage {
+ *   + length: Number
+ *   + data_points = Number[]
+ * }
+ * @enduml
+ */
+class MovingAverage {
+  /**
+   * @param {number} length
+   */
+  constructor(length) {
+    this.length = length;
+    this.data_points = [];
+  }
+
+  /** @returns {number} */
+  get average() {
+    const sum = this.data_points.reduce((sum, x) => sum + x, 0);
+    return sum / this.data_points.length || 0;
+  }
+
+  /** @param {number} value */
+  push(value) {
+    this.data_points.push(value);
+    if (this.data_points.length > this.length) {
+      this.data_points.shift();
+    }
+  }
+}
+
+/**
+ * TODO: Make it a general "debug" class and allow to add custom things.
+ *
+ * @startuml
+ * class PerformanceMonitor {
+ *   + parent : Painter
+ *   + rect : Rect
+ *   + ctx : CanvasRenderingContext2D
+ *   + fps_ma : MovingAverage
+ *   + render_time_ma : MovingAverage
+ *   + padding : Number
+ *   + text_size : Number
+ *   + text_margin : Number
+ *   + text_color : string
+ *   + background_color : string
+ *   + background_alpha : Number
+ *   + values : {[key: string]: Number}
+ *   + text : {[key: string]: string}
+ *   + computed_strings : string[]
+ *   + render() : void
+ * }
+ * @enduml
+ */
+class PerformanceMonitor {
+  /**
+   * @param {Painter} parent
+   */
+  constructor(parent) {
+    this.parent = parent;
+    this.rect = new Rect(7, 7);
+
+    // MA 60 ± 1s @ 60fps
+    this.fps_ma = new MovingAverage(60);
+    this.render_time_ma = new MovingAverage(60);
+
+    this.padding = 7;
+    this.text_size = 12;
+    this.text_margin = 3;
+    this.text_color = "grey";
+    this.background_color = "black";
+    this.background_alpha = 0.2;
+
+    this.values = {
+      fps: 0,
+      render_time: 0,
+      max_fps: 0,
+      pc_of_60_fps: 0,
+    };
+
+    this.text = {
+      fps: "fps:     {} fps",
+      render_time: "render:  {} ms",
+      max_fps: "max fps: {} fps",
+      pc_of_60_fps: "%60fps:  {} %",
+    };
+
+    this.computed_strings = [];
+  }
+
+  get ctx() {
+    return this.parent.ctx;
+  }
+
+  render() {
+    this.#compute_fps();
+    this.#compute_render_time();
+    this.#compute_theoretical_fps();
+    this.#compute_pc_of_60_fps();
+    this.#compute_strings();
+
+    this.ctx.save();
+
+    // Text style must be set before taking measures.
+    this.#set_up_text_style();
+
+    this.#set_rect_width_to_longest_string();
+    this.#set_rect_height_to_number_of_lines();
+
+    this.#draw_background();
+    this.#draw_info();
+
+    this.ctx.restore();
+  }
+
+  #compute_fps() {
+    const fps = 1000 / (this.parent.debug.delta_time * 1000);
+    this.fps_ma.push(fps !== Infinity ? fps : 0);
+    this.values.fps = this.fps_ma.average;
+  }
+
+  #compute_render_time() {
+    const render_time = this.parent.debug.render_time;
+    this.render_time_ma.push(render_time !== Infinity ? render_time : 0);
+    this.values.render_time = this.render_time_ma.average;
+  }
+
+  #compute_theoretical_fps() {
+    this.values.max_fps = 1000 / this.values.render_time;
+  }
+
+  #compute_pc_of_60_fps() {
+    this.values.pc_of_60_fps = (this.values.render_time / (1000 / 60)) * 100;
+  }
+
+  #compute_strings() {
+    this.computed_strings = [];
+    for (const data_type in this.values) {
+      const text = this.text[data_type];
+      const value = this.values[data_type].toFixed(1);
+      this.computed_strings.push(text.replace("{}", value));
+    }
+  }
+
+  #set_up_text_style() {
+    this.ctx.font = `${this.text_size}px monospace`;
+    this.ctx.textBaseline = "top";
+    this.ctx.fillStyle = this.text_color;
+  }
+
+  #set_rect_width_to_longest_string() {
+    let max_width = 0;
+    for (const string of this.computed_strings) {
+      const string_width = this.ctx.textWidth(string);
+      max_width = Math.max(max_width, string_width);
+    }
+    this.rect.w = max_width;
+  }
+
+  #set_rect_height_to_number_of_lines() {
+    const nb_lines = Object.keys(this.values).length;
+    this.rect.h = this.text_size * nb_lines + this.text_margin * (nb_lines - 1);
+  }
+
+  #draw_background() {
+    this.ctx.save();
+    this.ctx.globalAlpha = this.background_alpha;
+    this.ctx.fillStyle = this.background_color;
+    this.ctx.fillRect(
+      this.rect.x,
+      this.rect.y,
+      this.rect.w + this.padding * 2,
+      this.rect.h + this.padding * 2,
+    );
+    this.ctx.restore();
+  }
+
+  #draw_info() {
+    const line_height = this.text_size + this.text_margin;
+    for (let i = 0; i < this.computed_strings.length; ++i) {
+      this.ctx.fillText(
+        this.computed_strings[i],
+        this.rect.x + this.padding,
+        this.rect.y + this.padding + i * line_height,
+      );
+    }
+  }
+}
+
+/**
+ * @startuml
  * class Painter {
  *   + html_root : HTMLDivElement
  *   + rect : Rect
@@ -577,6 +788,8 @@ class Painter {
     this.rect = new Rect();
     this.mouse = new _Mouse(this.html_root);
     this.keyboard = new _Keyboard(this.html_root);
+
+    this.debug = new _Debug();
 
     this._has_setup_been_called = false;
 
@@ -927,6 +1140,9 @@ class Painter {
       previous_now = now;
 
       this.render(delta_time);
+
+      this.debug.delta_time = delta_time;
+      this.debug.render_time = performance.now() - now;
 
       window.requestAnimationFrame(render_loop);
     };
