@@ -1,8 +1,16 @@
+// TODO: don't extend native prototypes.
+
 if (!Number.prototype.mod) {
   // Modulo.
   Number.prototype.mod = function (n) {
     "use strict";
     return ((this % n) + n) % n;
+  };
+}
+
+if (!Number.prototype.clamp) {
+  Number.prototype.clamp = function (min, max) {
+    return Math.max(min, Math.min(this, max));
   };
 }
 

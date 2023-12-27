@@ -129,6 +129,246 @@ class Vec2D {
   }
 }
 
+class Collisions2D {
+  /**
+   * @param {{ x: number, y: number, w: number, h: number }} a
+   * @param {{ x: number, y: number, w: number, h: number }} b
+   * @returns {boolean}
+   */
+  static aabb_vs_aabb(a, b) {
+    return (
+      a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y
+    );
+  }
+
+  /**
+   * @param {{ cx: number, cy: number, r: number }} a
+   * @param {{ cx: number, cy: number, r: number }} b
+   * @returns {boolean}
+   */
+  static circle_vs_circle(a, b) {
+    const d = (a.cx - b.cx) ** 2 + (a.cy - b.cy) ** 2;
+    return d < (a.r + b.r) ** 2;
+  }
+
+  /**
+   * @param {{ x: number, y: number, w: number, h: number }} aabb
+   * @param {{ cx: number, cy: number, r: number }} circle
+   * @returns {boolean}
+   */
+  static aabb_vs_circle(aabb, circle) {
+    const nearest_x = Math.max(aabb.x, Math.min(circle.cx, aabb.x + aabb.w));
+    const nearest_y = Math.max(aabb.y, Math.min(circle.cy, aabb.y + aabb.h));
+    return this.point_vs_circle({ x: nearest_x, y: nearest_y }, circle);
+  }
+
+  /**
+   * @param {{ x: number, y: number }} point
+   * @param {{ x: number, y: number, w: number, h: number }} aabb
+   * @returns {boolean}
+   */
+  static point_vs_aabb(point, aabb) {
+    return (
+      point.x > aabb.x &&
+      point.x < aabb.x + aabb.w &&
+      point.y > aabb.y &&
+      point.y < aabb.y + aabb.h
+    );
+  }
+
+  /**
+   * @param {{ x: number, y: number }} point
+   * @param {{ cx: number, cy: number, r: number }} circle
+   * @returns {boolean}
+   */
+  static point_vs_circle(point, circle) {
+    const d = (point.x - circle.cx) ** 2 + (point.y - circle.cy) ** 2;
+    return d < circle.r ** 2;
+  }
+
+  /**
+   * @param {{ x1: number, y1: number, x2: number, y2: number }} ray
+   * @param {{ x: number, y: number, w: number, h: number }} aabb
+   * @param {{ time?: number, normal?: number[] }} info
+   * @returns {boolean}
+   */
+  static ray_vs_aabb(ray, aabb, info = {}) {
+    info.time = undefined;
+    info.normal = undefined;
+
+    const d = Vec2D.segment_to_vector(ray);
+    let near_time_x = (aabb.x - ray.x1) / d[0];
+    let far_time_x = (aabb.x + aabb.w - ray.x1) / d[0];
+
+    let near_time_y = (aabb.y - ray.y1) / d[1];
+    let far_time_y = (aabb.y + aabb.h - ray.y1) / d[1];
+
+    if (near_time_x > far_time_x) {
+      [near_time_x, far_time_x] = [far_time_x, near_time_x];
+    }
+    if (near_time_y > far_time_y) {
+      [near_time_y, far_time_y] = [far_time_y, near_time_y];
+    }
+
+    if (near_time_x > far_time_y || near_time_y > far_time_x) {
+      return false;
+    }
+
+    const time_hit_near = Math.max(near_time_x, near_time_y);
+    const time_hit_far = Math.min(far_time_x, far_time_y);
+
+    if (time_hit_far < 0) {
+      return false;
+    }
+
+    let contact_normal = [0, 0];
+    if (near_time_x > near_time_y) {
+      if (d[0] < 0) {
+        contact_normal = [1, 0];
+      } else {
+        contact_normal = [-1, 0];
+      }
+    } else if (near_time_x < near_time_y) {
+      if (d[1] < 0) {
+        contact_normal = [0, 1];
+      } else {
+        contact_normal = [0, -1];
+      }
+    }
+
+    info.time = time_hit_near;
+    info.normal = contact_normal;
+
+    return true;
+  }
+
+  /**
+   * @param {{ x1: number, y1: number, x2: number, y2: number }} segment
+   * @param {{ x: number, y: number, w: number, h: number }} aabb
+   * @param {{ time?: number, normal?: number[] }} info
+   * @returns {boolean}
+   */
+  static segment_vs_aabb(segment, aabb, info = {}) {
+    const are_colliding = this.ray_vs_aabb(segment, aabb, info);
+    // Ray extends into infinity, segment does not.
+    return are_colliding && info.time < 1;
+  }
+
+  /**
+   * @param {{ x: number, y: number, w: number, h: number }} source
+   * @param { number[] } source_velocity
+   * @param {{ x: number, y: number, w: number, h: number }} target
+   * @param {{ time?: number, normal?: number[] }} info
+   * @returns {boolean}
+   */
+  static swept_aabb_vs_aabb_detect_only(
+    source,
+    source_velocity,
+    target,
+    info = {},
+  ) {
+    info.time = undefined;
+    info.normal = undefined;
+
+    if (source_velocity[0] === 0 && source_velocity[1] === 0) {
+      return false;
+    }
+
+    const origin = [source.x + source.w / 2, source.y + source.h / 2];
+    const d = Vec2D.add(origin, source_velocity);
+    const expanded_target = {
+      x: target.x - source.w * 0.5,
+      y: target.y - source.h * 0.5,
+      w: target.w + source.w,
+      h: target.h + source.h,
+    };
+
+    const are_colliding = this.segment_vs_aabb(
+      { x1: origin[0], y1: origin[1], x2: d[0], y2: d[1] },
+      expanded_target,
+      info,
+    );
+    return are_colliding;
+  }
+
+  /**
+   * @param {{ x: number, y: number, w: number, h: number }} source
+   * @param { number[] } source_velocity
+   * @param {{ x: number, y: number, w: number, h: number }} target
+   * @param {{ time?: number, normal?: number[], resolution_vector?: number[] }} info
+   * @returns {boolean}
+   */
+  static swept_aabb_vs_aabb(source, source_velocity, target, info = {}) {
+    info.time = undefined;
+    info.normal = undefined;
+    info.resolution_vector = undefined;
+
+    const are_colliding = this.swept_aabb_vs_aabb_detect_only(
+      source,
+      source_velocity,
+      target,
+      info,
+    );
+
+    if (!are_colliding) {
+      return false;
+    }
+
+    // Axis-aligned direction of resolution (x, -x, y, -y).
+    const collision_normal = info.normal;
+    // Unsigned velocity (sign is given by collision_normal).
+    const absolute_velocity = [
+      Math.abs(source_velocity[0]),
+      Math.abs(source_velocity[1]),
+    ];
+    // How much overlap to resolve = How much velocity to cancel.
+    const resolution_normal = (1 - info.time).clamp(0, 1);
+
+    // collision normal * absolute_velocity * resolution_normal
+    const resolution_vector = Vec2D.multiply_by_scalar(
+      Vec2D.multiply(collision_normal, absolute_velocity),
+      resolution_normal,
+    );
+
+    // Due to rounding errors(?), the raw resolution vector can leave
+    // objects in collision. So, we make it a bit bigger to compensate.
+    const safe_resolution_vector = Vec2D.multiply_by_scalar(
+      resolution_vector,
+      1.0000001,
+    );
+
+    info.resolution_vector = safe_resolution_vector;
+
+    return true;
+  }
+
+  /**
+   * @param {{ x1: number, y1: number, x2: number, y2: number }} segment
+   * @param {{ cx: number, cy: number, r: number }} circle
+   * @returns {boolean}
+   */
+  static segment_vs_circle(segment, circle) {
+    const a = Vec2D.segment_to_vector({
+      x1: segment.x1,
+      y1: segment.y1,
+      x2: circle.cx,
+      y2: circle.cy,
+    });
+    const b = Vec2D.segment_to_vector(segment);
+
+    const time = Vec2D.projection_of_a_onto_b(a, b);
+    const clamped_time = time.clamp(0, 1);
+
+    const nearest_point = Vec2D.multiply_by_scalar(b, clamped_time);
+    const segment_to_circle = Vec2D.subtract(a, nearest_point);
+
+    // Square radius instead of sqrt(distance_to_circle).
+    const distance_to_circle =
+      segment_to_circle[0] ** 2 + segment_to_circle[1] ** 2;
+    return distance_to_circle < circle.r ** 2;
+  }
+}
+
 class Interpolation {
   /**
    * Linear.
