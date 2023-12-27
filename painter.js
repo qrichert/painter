@@ -17,25 +17,13 @@ if (!Array.prototype.shuffle) {
   };
 }
 
-/**
- * @startuml
- * class Rect {
- *   + x : Number
- *   + y : Number
- *   + w : Number
- *   + h : Number
- *   + xw : Number
- *   + yh : Number
- *   + cx : Number
- *   + cy : Number
- *   + ar : Number
- *   + dpr : Number
- *   + equals(other_rect) : Boolean
- *   + contains_point(x, y, offset?) : Boolean
- * }
- * @enduml
- */
 class Rect {
+  /**
+   * @param {number} x
+   * @param {number} y
+   * @param {number} w
+   * @param {number} h
+   */
   constructor(x = 0, y = 0, w = 0, h = 0) {
     this.x = x;
     this.y = y;
@@ -43,62 +31,76 @@ class Rect {
     this.h = h;
   }
 
+  /** @returns {number} */
   get x() {
     return this._x;
   }
 
+  /** @param {number} x */
   set x(x) {
     this._x = x;
     this.#update_values();
   }
 
+  /** @returns {number} */
   get y() {
     return this._y;
   }
 
+  /** @param {number} y */
   set y(y) {
     this._y = y;
     this.#update_values();
   }
 
+  /** @returns {number} */
   get w() {
     return this._w;
   }
 
+  /** @param {number} w */
   set w(w) {
     this._w = w;
     this.#update_values();
   }
 
+  /** @returns {number} */
   get h() {
     return this._h;
   }
 
+  /** @param {number} h */
   set h(h) {
     this._h = h;
     this.#update_values();
   }
 
+  /** @returns {number} */
   get xw() {
     return this._xw;
   }
 
+  /** @returns {number} */
   get yh() {
     return this._yh;
   }
 
+  /** @returns {number} */
   get cx() {
     return this._cx;
   }
 
+  /** @returns {number} */
   get cy() {
     return this._cy;
   }
 
+  /** @returns {number} */
   get ar() {
     return this._ar;
   }
 
+  /** @returns {number} */
   get dpr() {
     return window.devicePixelRatio || 1;
   }
@@ -111,6 +113,10 @@ class Rect {
     this._ar = this._w / this._h;
   }
 
+  /**
+   * @param {Rect} other_rect
+   * @returns {boolean}
+   */
   equals(other_rect) {
     return (
       this.x === other_rect.x &&
@@ -120,6 +126,12 @@ class Rect {
     );
   }
 
+  /**
+   * @param {number} x
+   * @param {number} y
+   * @param {number} offset
+   * @returns {boolean}
+   */
   contains_point(x, y, offset = 0) {
     return this.#contains_x(x, offset) && this.#contains_y(y, offset);
   }
@@ -137,19 +149,9 @@ class Rect {
   }
 }
 
-/**
- * @startuml
- * class _Mouse {
- *   + x : Number
- *   + y : Number
- *   + is_pressed : Boolean
- *   + is_dragging : Boolean
- * }
- * @enduml
- */
 class _Mouse {
   /**
-   * @param {HTMLElement} parent
+   * @param {HTMLDivElement} parent
    */
   constructor(parent) {
     if (_Mouse._instance) {
@@ -167,18 +169,22 @@ class _Mouse {
     this.#set_up_event_handlers();
   }
 
+  /** @returns {number} */
   get x() {
     return this._x;
   }
 
+  /** @returns {number} */
   get y() {
     return this._y;
   }
 
+  /** @returns {boolean} */
   get is_pressed() {
     return this._is_pressed;
   }
 
+  /** @returns {boolean} */
   get is_dragging() {
     return this._is_dragging;
   }
@@ -212,17 +218,9 @@ class _Mouse {
   }
 }
 
-/**
- * @startuml
- * class _Keyboard {
- *   + keys_pressed : String[]
- *   + is_key_pressed(key) : Boolean
- * }
- * @enduml
- */
 class _Keyboard {
   /**
-   * @param {HTMLElement} parent
+   * @param {HTMLDivElement} parent
    */
   constructor(parent) {
     if (_Keyboard._instance) {
@@ -231,11 +229,17 @@ class _Keyboard {
     _Keyboard._instance = this;
 
     this.parent = parent;
+
+    /** @type {string[]} */
     this.keys_pressed = [];
 
     this.#set_up_event_handlers();
   }
 
+  /**
+   * @param {string} key
+   * @returns {boolean}
+   */
   is_key_pressed(key) {
     key = this.#convert_special_key_to_standard_key(key);
     return this.keys_pressed.indexOf(key) > -1;
@@ -291,30 +295,6 @@ class _Keyboard {
   }
 }
 
-/**
- * @startuml
- * class _PixelContext {
- *   + parent : Painter
- *   + ctx : CanvasContext
- *   + pixelSize : Number
- *   + width : Number
- *   + height : Number
- *   + trueWidth : Number
- *   + trueHeight : Number
- *   + setContext(ctx) : void
- *   + getBuffer() : ImageData
- *   + refreshBuffer() : void
- *   + setBuffer(buffer) : void
- *   + putBuffer() : void
- *   + cloneBuffer(buffer) : ImageData
- *   + getPixel(x, y) : Number[]
- *   + setPixel(x, y, color) : void
- *   + fillBuffer(color) : void
- *   + screenToWorld(x, y) : Number[]
- *   + worldToScreen(x, y) : Number[]
- * }
- * @enduml
- */
 class _PixelContext {
   /**
    * @param {Painter} parent
@@ -332,54 +312,50 @@ class _PixelContext {
   }
 
   /**
-   * Get number of screen pixels to use to represent one world pixel.
+   * Number of screen pixels to use to represent one world pixel.
    *
-   * @returns {Number}
+   * @returns {number}
    */
   get pixelSize() {
     return this._pixelSize;
   }
 
-  /**
-   * Set number of screen pixels to use to represent one world pixel.
-   *
-   * @param {Number} size
-   */
+  /** @param {number} size */
   set pixelSize(size) {
     this._pixelSize = size * this.parent.rect.dpr;
   }
 
   /**
-   * Return number of world pixels on X axis.
+   * Number of world pixels on X axis.
    *
-   * @returns {Number}
+   * @returns {number}
    */
   get width() {
     return this._buffer && Math.ceil(this._buffer.width / this.pixelSize);
   }
 
   /**
-   * Return number of world pixels on Y axis.
+   * Number of world pixels on Y axis.
    *
-   * @returns {Number}
+   * @returns {number}
    */
   get height() {
     return this._buffer && Math.ceil(this._buffer.height / this.pixelSize);
   }
 
   /**
-   * Return number of world pixels on X axis visible on screen.
+   * Number of world pixels on X axis visible on screen.
    *
-   * @returns {Number}
+   * @returns {number}
    */
   get trueWidth() {
     return this._buffer && this._buffer.width / this.pixelSize;
   }
 
   /**
-   * Return number of world pixels on Y axis visible on screen.
+   * Number of world pixels on Y axis visible on screen.
    *
-   * @returns {Number}
+   * @returns {number}
    */
   get trueHeight() {
     return this._buffer && this._buffer.height / this.pixelSize;
@@ -400,7 +376,7 @@ class _PixelContext {
   }
 
   /**
-   * Return current buffer (and refresh if first time).
+   * Return current buffer (refreshed on first call).
    *
    * @returns {ImageData}
    */
@@ -450,9 +426,9 @@ class _PixelContext {
   /**
    * Return color components of single world pixel.
    *
-   * @param {Number} x
-   * @param {Number} y
-   * @returns {Number[]}
+   * @param {number} x
+   * @param {number} y
+   * @returns {number[]}
    */
   getPixel(x, y) {
     const { data, width, height } = this._buffer;
@@ -463,11 +439,11 @@ class _PixelContext {
   }
 
   /**
-   * Set color components of single world pixel.
+   * Set color components of a single world pixel.
    *
-   * @param {Number} x
-   * @param {Number} y
-   * @param {Number[]} color
+   * @param {number} x
+   * @param {number} y
+   * @param {number[]} color
    */
   setPixel(x, y, color) {
     [x, y] = this.worldToScreen(x, y);
@@ -497,7 +473,7 @@ class _PixelContext {
   /**
    * Fill buffer with single color.
    *
-   * @param {Number[]} color
+   * @param {number[]} color
    */
   fillBuffer(color) {
     const data = this._buffer.data;
@@ -506,6 +482,13 @@ class _PixelContext {
     }
   }
 
+  /**
+   * Convert screen coordinates to world coordinates.
+   *
+   * @param {number} x
+   * @param {number} y
+   * @returns {number[]}
+   */
   screenToWorld(x, y) {
     const { w, h } = this.parent.rect;
     x = Math.floor((x / w) * this.trueWidth);
@@ -513,6 +496,13 @@ class _PixelContext {
     return [x, y];
   }
 
+  /**
+   * Convert world coordinates to screen coordinates.
+   *
+   * @param {number} x
+   * @param {number} y
+   * @returns {number[]}
+   */
   worldToScreen(x, y) {
     x *= this.pixelSize;
     y *= this.pixelSize;
@@ -521,11 +511,8 @@ class _PixelContext {
 }
 
 /**
- * enum ScrollDirection {
- *   + Undefined
- *   + Horizontal
- *   + Vertical
- * }
+ * @readonly
+ * @enum {number}
  */
 const ScrollDirection = {
   Undefined: "Undefined",
@@ -533,17 +520,11 @@ const ScrollDirection = {
   Vertical: "Vertical",
 };
 
-/**
- * @startuml
- * class _Debug {
- *   + delta_time : Number
- *   + render_time : Number
- * }
- * @enduml
- */
 class _Debug {
   constructor() {
+    /** @type {number} */
     this.delta_time = 0;
+    /** @type {number} */
     this.render_time = 0;
   }
 }
@@ -553,14 +534,7 @@ class _Debug {
  *
  * Works like an array you can push to indefinitely.
  * It will only hold the last X (length) values.
- * The ``average`` property holds the current average.
- *
- * @startuml
- * class MovingAverage {
- *   + length: Number
- *   + data_points = Number[]
- * }
- * @enduml
+ * The "average" property holds the current average.
  */
 class MovingAverage {
   /**
@@ -568,6 +542,7 @@ class MovingAverage {
    */
   constructor(length) {
     this.length = length;
+    /** @type {number[]} */
     this.data_points = [];
   }
 
@@ -586,35 +561,14 @@ class MovingAverage {
   }
 }
 
-/**
- * TODO: Make it a general "debug" class and allow to add custom things.
- *
- * @startuml
- * class PerformanceMonitor {
- *   + parent : Painter
- *   + rect : Rect
- *   + ctx : CanvasRenderingContext2D
- *   + fps_ma : MovingAverage
- *   + render_time_ma : MovingAverage
- *   + padding : Number
- *   + text_size : Number
- *   + text_margin : Number
- *   + text_color : string
- *   + background_color : string
- *   + background_alpha : Number
- *   + values : {[key: string]: Number}
- *   + text : {[key: string]: string}
- *   + computed_strings : string[]
- *   + render() : void
- * }
- * @enduml
- */
+// TODO: Make it a general "debug" class and allow to add custom things.
 class PerformanceMonitor {
   /**
    * @param {Painter} parent
    */
   constructor(parent) {
     this.parent = parent;
+    this.ctx = this.parent.ctx;
     this.rect = new Rect(7, 7);
 
     // MA 60 ± 1s @ 60fps
@@ -628,6 +582,7 @@ class PerformanceMonitor {
     this.background_color = "black";
     this.background_alpha = 0.2;
 
+    /** @type {{ [key: string]: number }} */
     this.values = {
       fps: 0,
       render_time: 0,
@@ -635,6 +590,7 @@ class PerformanceMonitor {
       pc_of_60_fps: 0,
     };
 
+    /** @type {{ [key: string]: string }} */
     this.text = {
       fps: "fps:     {} fps",
       render_time: "render:  {} ms",
@@ -642,11 +598,8 @@ class PerformanceMonitor {
       pc_of_60_fps: "%60fps:  {} %",
     };
 
+    /** @type {string[]} */
     this.computed_strings = [];
-  }
-
-  get ctx() {
-    return this.parent.ctx;
   }
 
   render() {
@@ -658,7 +611,7 @@ class PerformanceMonitor {
 
     this.ctx.save();
 
-    // Text style must be set before taking measures.
+    // Text style must be set before taking text measures.
     this.#set_up_text_style();
 
     this.#set_rect_width_to_longest_string();
@@ -744,46 +697,9 @@ class PerformanceMonitor {
   }
 }
 
-/**
- * @startuml
- * class Painter {
- *   + html_root : HTMLDivElement
- *   + rect : Rect
- *   + mouse : _Mouse
- *   + keyboard : _Keyboard
- *   + ctx : CanvasRenderingContext2D
- *   + pxctx : _PixelContext
- *   + ctx.clear() : void
- *   + ctx.fillScreen() : void
- *   + ctx.strokeLine(from_x, from_y, to_x, to_y) : void
- *   + ctx.strokeCircle(x, y, r) : void
- *   + ctx.fillCircle(x, y, r) : void
- *   + ctx.strokeTriangle(x1, y1, x2, y2, x3, y3) : void
- *   + ctx.fillTriangle(x1, y1, x2, y2, x3, y3) : void
- *   + ctx.textWidth(text) : Number
- *   + resize_event() : void
- *   + mouse_press_event(x, y) : void
- *   + mouse_release_event(x, y) : void
- *   + mouse_click_event(x, y) : void
- *   + mouse_double_click_event(x, y) : void
- *   + mouse_move_event(x, y, dx, dy) : void
- *   + mouse_drag_event(dx, dy) : void
- *   + wheel_event(x, y, dx, dy) : void
- *   + horizontal_wheel_event(dx) : void
- *   + vertical_wheel_event(dy) : void
- *   + key_press_event(key) : void
- *   + key_release_event(key) : void
- *   + paste_event(data) : void
- *   + paste_text_event(text) : void
- *   + create_ctx(width, height): CanvasRenderingContext2D
- *   + exec() : void
- *   + setup() : void {abstract}
- *   + render(delta_time) : void {abstract}
- * }
- * @enduml
- */
 class Painter {
   constructor() {
+    /** @type {HTMLDivElement} */
     this.html_root = document.getElementById("root");
     this.rect = new Rect();
     this.mouse = new _Mouse(this.html_root);
@@ -1023,14 +939,36 @@ class Painter {
 
   resize_event() {}
 
+  /**
+   * @param {number} x
+   * @param {number} y
+   */
   mouse_press_event(x, y) {}
 
+  /**
+   * @param {number} x
+   * @param {number} y
+   */
   mouse_release_event(x, y) {}
 
+  /**
+   * @param {number} x
+   * @param {number} y
+   */
   mouse_click_event(x, y) {}
 
+  /**
+   * @param {number} x
+   * @param {number} y
+   */
   mouse_double_click_event(x, y) {}
 
+  /**
+   * @param {number} x
+   * @param {number} y
+   * @param {number} dx
+   * @param {number} dy
+   */
   #mouse_move_event_handler(x, y, dx, dy) {
     if (this.mouse.is_dragging) {
       this.mouse_drag_event(x, y, dx, dy);
@@ -1038,8 +976,18 @@ class Painter {
     this.mouse_move_event(x, y, dx, dy);
   }
 
+  /**
+   * @param {number} x
+   * @param {number} y
+   * @param {number} dx
+   * @param {number} dy
+   */
   mouse_move_event(x, y, dx, dy) {}
 
+  /**
+   * @param {number} dx
+   * @param {number} dy
+   */
   mouse_drag_event(dx, dy) {}
 
   #wheel_event_handler(x, y, dx, dy) {
@@ -1055,9 +1003,7 @@ class Painter {
     }
   }
 
-  /**
-   * Return direction of scroll with most magnitude.
-   */
+  /** Return direction of scroll with most magnitude. */
   #determine_scroll_direction(dx, dy) {
     dx = Math.abs(dx);
     dy = Math.abs(dy);
@@ -1066,14 +1012,24 @@ class Painter {
     return ScrollDirection.Undefined;
   }
 
+  /**
+   * @param {number} x
+   * @param {number} y
+   * @param {number} dx
+   * @param {number} dy
+   */
   wheel_event(x, y, dx, dy) {}
 
+  /** @param {number} dx */
   horizontal_wheel_event(dx) {}
 
+  /** @param {number} dy */
   vertical_wheel_event(dy) {}
 
+  /** @param {string} key */
   key_press_event(key) {}
 
+  /** @param {string} key */
   key_release_event(key) {}
 
   #paste_event_handler(e) {
@@ -1083,10 +1039,17 @@ class Painter {
     this.paste_text_event(data.getData("text"));
   }
 
+  /** @param {DataTransfer} data */
   paste_event(data) {}
 
+  /** @param {string} text */
   paste_text_event(text) {}
 
+  /**
+   * @param {?number} width
+   * @param {?number} height
+   * @returns {CanvasRenderingContext2D}
+   */
   create_ctx(width = null, height = null) {
     width = width || this.rect.w;
     height = height || this.rect.h;
@@ -1150,7 +1113,12 @@ class Painter {
     render_loop();
   }
 
+  /** @abstract */
   setup() {} // Override.
 
+  /**
+   * @abstract
+   * @param {number} delta_time (in seconds)
+   */
   render(delta_time) {} // Override.
 }
