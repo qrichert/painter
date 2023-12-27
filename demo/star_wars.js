@@ -66,7 +66,7 @@ her people and restore
 freedom to the galaxy....
 `;
 
-const rlerp = (a, b, t) => (t - a) / (b - a);
+const rlerp = (a, b, v) => Interpolation.rlerp(a, b, v);
 
 class StarWars extends Painter {
   setup() {
@@ -414,8 +414,7 @@ class StarWars extends Painter {
       this.anim.star_wars,
     );
 
-    // Points found by approximative measurement (1 per second),
-    // interpolated linearly.
+    // Points found by approximative measurement (1 per second).
     const points = [
       [0, 1],
       [0.004, 0.99],
@@ -455,56 +454,15 @@ class StarWars extends Painter {
       }
     }
 
+    // How far are we on the journey of p1.x to p2.x?
+    // Progress is necessarily between the two Xs.
     const lin_t = rlerp(p1[0], p2[0], progress);
 
-    const factor = this.#catmull_rom(p0, p1, p2, p3, lin_t, 0.5)[1];
-    return factor;
+    return this.#catmull_rom(p0, p1, p2, p3, lin_t);
   }
 
-  #catmull_rom(p0, p1, p2, p3, t, alpha = 0.5) {
-    const get_t = (t, alpha, p0, p1) => {
-      const d = [p1[0] - p0[0], p1[1] - p0[1]]; // p1 - p0
-      const a = d[0] * d[0] + d[1] * d[1]; // d • d
-      const b = Math.pow(a, alpha * 0.5);
-      return b + t;
-    };
-
-    const lerp = (a, b, t) => (1 - t) * a + t * b;
-
-    const t0 = 0.0;
-    const t1 = get_t(t0, alpha, p0, p1);
-    const t2 = get_t(t1, alpha, p1, p2);
-    const t3 = get_t(t2, alpha, p2, p3);
-    t = lerp(t1, t2, t);
-
-    const vec2d_x_scalar = (v, scalar) => [v[0] * scalar, v[1] * scalar];
-    const vec2d_add = (v1, v2) => [v1[0] + v2[0], v1[1] + v2[1]];
-
-    const A1 = vec2d_add(
-      vec2d_x_scalar(p0, (t1 - t) / (t1 - t0)),
-      vec2d_x_scalar(p1, (t - t0) / (t1 - t0)),
-    );
-    const A2 = vec2d_add(
-      vec2d_x_scalar(p1, (t2 - t) / (t2 - t1)),
-      vec2d_x_scalar(p2, (t - t1) / (t2 - t1)),
-    );
-    const A3 = vec2d_add(
-      vec2d_x_scalar(p2, (t3 - t) / (t3 - t2)),
-      vec2d_x_scalar(p3, (t - t2) / (t3 - t2)),
-    );
-    const B1 = vec2d_add(
-      vec2d_x_scalar(A1, (t2 - t) / (t2 - t0)),
-      vec2d_x_scalar(A2, (t - t0) / (t2 - t0)),
-    );
-    const B2 = vec2d_add(
-      vec2d_x_scalar(A2, (t3 - t) / (t3 - t1)),
-      vec2d_x_scalar(A3, (t - t1) / (t3 - t1)),
-    );
-    const C = vec2d_add(
-      vec2d_x_scalar(B1, (t2 - t) / (t2 - t1)),
-      vec2d_x_scalar(B2, (t - t1) / (t2 - t1)),
-    );
-    return C;
+  #catmull_rom(p0, p1, p2, p3, t) {
+    return Interpolation.catmull_rom(p0, p1, p2, p3, t, 0.5)[1];
   }
 
   #compute_star_wars_text_opacity() {
