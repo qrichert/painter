@@ -1,3 +1,134 @@
+class Vec2D {
+  /**
+   * @param {[number, number]} a
+   * @param {[number, number]} b
+   * @returns {[number, number]}
+   */
+  static add(a, b) {
+    return [a[0] + b[0], a[1] + b[1]];
+  }
+
+  /**
+   * @param {[number, number]} a
+   * @param {[number, number]} b
+   * @returns {[number, number]}
+   */
+  static subtract(a, b) {
+    return [a[0] - b[0], a[1] - b[1]];
+  }
+
+  /**
+   * @param {[number, number]} a
+   * @param {[number, number]} b
+   * @returns {[number, number]}
+   */
+  static multiply(a, b) {
+    return [a[0] * b[0], a[1] * b[1]];
+  }
+
+  /**
+   * @param {[number, number]} a
+   * @param {number} scalar
+   * @returns {[number, number]}
+   */
+  static multiply_by_scalar(a, scalar) {
+    return [a[0] * scalar, a[1] * scalar];
+  }
+
+  /**
+   * @param {[number, number]} a
+   * @param {[number, number]} b
+   * @returns {[number, number]}
+   */
+  static divide(a, b) {
+    return [a[0] / b[0], a[1] / b[1]];
+  }
+
+  /**
+   * @param {[number, number]} a
+   * @param {number} scalar
+   * @returns {[number, number]}
+   */
+  static divide_by_scalar(a, scalar) {
+    return [a[0] / scalar, a[1] / scalar];
+  }
+
+  /**
+   * @param {[number, number][]} vectors
+   * @returns {[number, number]}
+   */
+  static sum(...vectors) {
+    return vectors.reduce((sum, v) => this.add(sum, v), [0, 0]);
+  }
+
+  /**
+   * @param {[number, number][]} vectors
+   * @returns {[number, number]}
+   */
+  static mean(...vectors) {
+    const sum = this.sum(...vectors);
+    return this.divide_by_scalar(sum, vectors.length);
+  }
+
+  /**
+   * @param {[number, number]} a
+   * @returns {number}
+   */
+  static magnitude(a) {
+    return Math.sqrt(a[0] ** 2 + a[1] ** 2);
+  }
+
+  /**
+   * @param {[number, number]} a
+   * @returns {[number, number]}
+   */
+  static normalize(a) {
+    const length = this.magnitude(a);
+    return this.divide_by_scalar(a, length);
+  }
+
+  /**
+   * @param {[number, number]} a
+   * @returns {[number, number]}
+   */
+  static normal(a) {
+    const [x, y] = a;
+    return [y, -x];
+  }
+
+  /**
+   * @param {[number, number]} a
+   * @param {[number, number]} b
+   * @returns number
+   */
+  static dot_product(a, b) {
+    return a[0] * b[0] + a[1] * b[1];
+  }
+
+  /**
+   * @param {[number, number]} a
+   * @param {[number, number]} b
+   * @returns {number}
+   */
+  static projection_of_a_onto_b(a, b) {
+    // (a⋅b)/∥b∥^2
+    const dot_product = this.dot_product(a, b);
+    // magnitude(b) ** 2 involves a square root, canceled by "** 2".
+    // It is more efficient to do it manually and avoid the sqrt().
+    const squared_magnitude_of_b = b[0] ** 2 + b[1] ** 2;
+    return dot_product / squared_magnitude_of_b;
+  }
+
+  /**
+   * @param {{ x1: number, y1: number, x2: number, y2: number }} segment
+   * @returns {[number, number]}
+   */
+  static segment_to_vector(segment) {
+    const { x1, y1, x2, y2 } = segment;
+    return [x2 - x1, y2 - y1];
+  }
+}
+
 class Interpolation {
   /**
    * Linear.
@@ -118,32 +249,29 @@ class Interpolation {
     const t3 = get_t(t2, alpha, p2, p3);
     t = this.lerp(t1, t2, t);
 
-    const vec2d_x_scalar = (v, scalar) => [v[0] * scalar, v[1] * scalar];
-    const vec2d_add = (v1, v2) => [v1[0] + v2[0], v1[1] + v2[1]];
-
-    const A1 = vec2d_add(
-      vec2d_x_scalar(p0, (t1 - t) / (t1 - t0)),
-      vec2d_x_scalar(p1, (t - t0) / (t1 - t0)),
+    const A1 = Vec2D.add(
+      Vec2D.multiply_by_scalar(p0, (t1 - t) / (t1 - t0)),
+      Vec2D.multiply_by_scalar(p1, (t - t0) / (t1 - t0)),
     );
-    const A2 = vec2d_add(
-      vec2d_x_scalar(p1, (t2 - t) / (t2 - t1)),
-      vec2d_x_scalar(p2, (t - t1) / (t2 - t1)),
+    const A2 = Vec2D.add(
+      Vec2D.multiply_by_scalar(p1, (t2 - t) / (t2 - t1)),
+      Vec2D.multiply_by_scalar(p2, (t - t1) / (t2 - t1)),
     );
-    const A3 = vec2d_add(
-      vec2d_x_scalar(p2, (t3 - t) / (t3 - t2)),
-      vec2d_x_scalar(p3, (t - t2) / (t3 - t2)),
+    const A3 = Vec2D.add(
+      Vec2D.multiply_by_scalar(p2, (t3 - t) / (t3 - t2)),
+      Vec2D.multiply_by_scalar(p3, (t - t2) / (t3 - t2)),
     );
-    const B1 = vec2d_add(
-      vec2d_x_scalar(A1, (t2 - t) / (t2 - t0)),
-      vec2d_x_scalar(A2, (t - t0) / (t2 - t0)),
+    const B1 = Vec2D.add(
+      Vec2D.multiply_by_scalar(A1, (t2 - t) / (t2 - t0)),
+      Vec2D.multiply_by_scalar(A2, (t - t0) / (t2 - t0)),
     );
-    const B2 = vec2d_add(
-      vec2d_x_scalar(A2, (t3 - t) / (t3 - t1)),
-      vec2d_x_scalar(A3, (t - t1) / (t3 - t1)),
+    const B2 = Vec2D.add(
+      Vec2D.multiply_by_scalar(A2, (t3 - t) / (t3 - t1)),
+      Vec2D.multiply_by_scalar(A3, (t - t1) / (t3 - t1)),
     );
-    const C = vec2d_add(
-      vec2d_x_scalar(B1, (t2 - t) / (t2 - t1)),
-      vec2d_x_scalar(B2, (t - t1) / (t2 - t1)),
+    const C = Vec2D.add(
+      Vec2D.multiply_by_scalar(B1, (t2 - t) / (t2 - t1)),
+      Vec2D.multiply_by_scalar(B2, (t - t1) / (t2 - t1)),
     );
     return C;
   }
