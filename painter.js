@@ -569,8 +569,7 @@ class MovingAverage {
   }
 }
 
-// TODO: Make it a general "debug" class and allow to add custom things.
-class PerformanceMonitor {
+class DebugMonitor {
   /**
    * @param {Painter} parent
    */
@@ -608,9 +607,16 @@ class PerformanceMonitor {
 
     /** @type {string[]} */
     this.computed_strings = [];
+    /** @type {string[]} */
+    this._additional_strings = [];
   }
 
-  render() {
+  /**
+   * @param {?string[]} additional_strings
+   */
+  render(additional_strings = []) {
+    this._additional_strings = additional_strings;
+
     this.#compute_fps();
     this.#compute_render_time();
     this.#compute_theoretical_fps();
@@ -668,7 +674,8 @@ class PerformanceMonitor {
 
   #set_rect_width_to_longest_string() {
     let max_width = 0;
-    for (const string of this.computed_strings) {
+    const strings = [...this.computed_strings, ...this._additional_strings];
+    for (const string of strings) {
       const string_width = this.ctx.textWidth(string);
       max_width = Math.max(max_width, string_width);
     }
@@ -676,7 +683,8 @@ class PerformanceMonitor {
   }
 
   #set_rect_height_to_number_of_lines() {
-    const nb_lines = Object.keys(this.values).length;
+    const nb_lines =
+      this.computed_strings.length + this._additional_strings.length;
     this.rect.h = this.text_size * nb_lines + this.text_margin * (nb_lines - 1);
   }
 
@@ -694,10 +702,11 @@ class PerformanceMonitor {
   }
 
   #draw_info() {
+    const strings = [...this.computed_strings, ...this._additional_strings];
     const line_height = this.text_size + this.text_margin;
-    for (let i = 0; i < this.computed_strings.length; ++i) {
+    for (let i = 0; i < strings.length; ++i) {
       this.ctx.fillText(
-        this.computed_strings[i],
+        strings[i],
         this.rect.x + this.padding,
         this.rect.y + this.padding + i * line_height,
       );
