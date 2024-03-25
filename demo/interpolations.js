@@ -171,7 +171,7 @@ class Interpolations extends Painter {
     }
   }
 
-  mouse_release_event() {
+  mouse_release_event(x, y) {
     for (const point of this.points) {
       point.mouse_release_event();
     }

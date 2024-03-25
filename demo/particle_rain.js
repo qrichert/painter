@@ -4,17 +4,6 @@
 const PARTICLE_SIZE = 2.7;
 
 /**
- * Return random value between min and max boundaries.
- *
- * @param {number} min
- * @param {number} max
- * @returns {number}
- */
-function rand(min = 0, max = 1) {
-  return Math.random() * (max - min) + min;
-}
-
-/**
  * CSS-like cover effect for child element.
  *
  * @param {number} container_width

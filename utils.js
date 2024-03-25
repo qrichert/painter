@@ -54,7 +54,7 @@ class Vec2D {
   }
 
   /**
-   * @param {[number, number][]} vectors
+   * @param {...[number, number]} vectors
    * @returns {[number, number]}
    */
   static sum(...vectors) {
@@ -62,7 +62,7 @@ class Vec2D {
   }
 
   /**
-   * @param {[number, number][]} vectors
+   * @param {...[number, number]} vectors
    * @returns {[number, number]}
    */
   static mean(...vectors) {
@@ -197,11 +197,18 @@ class Collisions2D {
     info.normal = undefined;
 
     const d = Vec2D.segment_to_vector(ray);
+
     let near_time_x = (aabb.x - ray.x1) / d[0];
     let far_time_x = (aabb.x + aabb.w - ray.x1) / d[0];
 
+    if (Number.isNaN(near_time_x)) near_time_x = -Infinity;
+    if (Number.isNaN(far_time_x)) far_time_x = +Infinity;
+
     let near_time_y = (aabb.y - ray.y1) / d[1];
     let far_time_y = (aabb.y + aabb.h - ray.y1) / d[1];
+
+    if (Number.isNaN(near_time_y)) near_time_y = -Infinity;
+    if (Number.isNaN(far_time_y)) far_time_y = +Infinity;
 
     if (near_time_x > far_time_x) {
       [near_time_x, far_time_x] = [far_time_x, near_time_x];
@@ -343,6 +350,49 @@ class Collisions2D {
   }
 
   /**
+   * @param {{ x: number, y: number, w: number, h: number }} source
+   * @param { number[] } source_velocity
+   * @param {{ x: number, y: number, w: number, h: number }} target
+   * @param { number[] } target_velocity
+   * @param {{ time?: number, normal?: number[] }} info
+   * @returns {boolean}
+   */
+  static swept_aabb_vs_moving_aabb_detect_only(
+    source,
+    source_velocity,
+    target,
+    target_velocity,
+    info = {},
+  ) {
+    source_velocity = Vec2D.subtract(source_velocity, target_velocity);
+    return this.swept_aabb_vs_aabb_detect_only(
+      source,
+      source_velocity,
+      target,
+      info,
+    );
+  }
+
+  /**
+   * @param {{ x: number, y: number, w: number, h: number }} source
+   * @param { number[] } source_velocity
+   * @param {{ x: number, y: number, w: number, h: number }} target
+   * @param { number[] } target_velocity
+   * @param {{ time?: number, normal?: number[], resolution_vector?: number[] }} info
+   * @returns {boolean}
+   */
+  static swept_aabb_vs_moving_aabb(
+    source,
+    source_velocity,
+    target,
+    target_velocity,
+    info = {},
+  ) {
+    source_velocity = Vec2D.subtract(source_velocity, target_velocity);
+    return this.swept_aabb_vs_aabb(source, source_velocity, target, info);
+  }
+
+  /**
    * @param {{ x1: number, y1: number, x2: number, y2: number }} segment
    * @param {{ cx: number, cy: number, r: number }} circle
    * @returns {boolean}
@@ -477,9 +527,9 @@ class Interpolation {
    */
   static catmull_rom(p0, p1, p2, p3, t, alpha = 0.5) {
     const get_t = (t, alpha, p0, p1) => {
-      const d = [p1[0] - p0[0], p1[1] - p0[1]]; // p1 - p0
-      const a = d[0] * d[0] + d[1] * d[1]; // d • d
-      const b = a ** (alpha * 0.5); // a ^ (alpha/2)
+      const d = Vec2D.subtract(p1, p0);
+      const a = Vec2D.dot_product(d, d);
+      const b = a ** (alpha * 0.5);
       return b + t;
     };
 

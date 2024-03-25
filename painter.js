@@ -25,6 +25,17 @@ if (!Array.prototype.shuffle) {
   };
 }
 
+/**
+ * Return random value between min and max boundaries.
+ *
+ * @param {number} min
+ * @param {number} max
+ * @returns {number}
+ */
+function rand(min = 0, max = 1) {
+  return Math.random() * (max - min) + min;
+}
+
 class Rect {
   /**
    * @param {number} x
@@ -134,6 +145,12 @@ class Rect {
     );
   }
 
+  /** @returns {Rect} */
+  clone() {
+    const { x, y, w, h } = this;
+    return new Rect(x, y, w, h);
+  }
+
   /**
    * @param {number} x
    * @param {number} y
@@ -171,6 +188,8 @@ class _Mouse {
 
     this._x = -1;
     this._y = -1;
+    this._dx = 0;
+    this._dy = 0;
     this._is_pressed = false;
     this._is_dragging = false;
 
@@ -185,6 +204,16 @@ class _Mouse {
   /** @returns {number} */
   get y() {
     return this._y;
+  }
+
+  /** @returns {number} */
+  get dx() {
+    return this._dx;
+  }
+
+  /** @returns {number} */
+  get dy() {
+    return this._dy;
   }
 
   /** @returns {boolean} */
@@ -205,7 +234,12 @@ class _Mouse {
       this.#mouse_up_event_handler();
     });
     window.addEventListener("mousemove", (e) => {
-      this.#mouse_move_event_handler(e.offsetX, e.offsetY);
+      this.#mouse_move_event_handler(
+        e.offsetX,
+        e.offsetY,
+        e.movementX,
+        e.movementY,
+      );
     });
   }
 
@@ -219,10 +253,12 @@ class _Mouse {
     this._is_dragging = false;
   }
 
-  #mouse_move_event_handler(x, y) {
+  #mouse_move_event_handler(x, y, dx, dy) {
     this._is_dragging = this._is_pressed;
     this._x = x;
     this._y = y;
+    this._dx = dx;
+    this._dy = dy;
   }
 }
 
@@ -520,7 +556,7 @@ class _PixelContext {
 
 /**
  * @readonly
- * @enum {number}
+ * @enum {ScrollDirection}
  */
 const ScrollDirection = {
   Undefined: "Undefined",
@@ -692,7 +728,7 @@ class DebugMonitor {
     this.ctx.save();
     this.ctx.globalAlpha = this.background_alpha;
     this.ctx.fillStyle = this.background_color;
-    this.ctx.fillRect(
+    this.ctx.fillRoundRect(
       this.rect.x,
       this.rect.y,
       this.rect.w + this.padding * 2,
@@ -756,6 +792,9 @@ class Painter {
         this.#fill_screen(ctx);
       };
     }
+    if (!ctx.textWidth) {
+      ctx.textWidth = (text) => this.#text_width(ctx, text);
+    }
     if (!ctx.strokeLine) {
       ctx.strokeLine = (from_x, from_y, to_x, to_y) => {
         this.#stroke_line(ctx, from_x, from_y, to_x, to_y);
@@ -771,18 +810,25 @@ class Painter {
         this.#fill_circle(ctx, x, y, r);
       };
     }
-    if (!this.ctx.strokeTriangle) {
-      this.ctx.strokeTriangle = (x1, y1, x2, y2, x3, y3) => {
-        this.#stroke_triangle(x1, y1, x2, y2, x3, y3);
+    if (!ctx.strokeTriangle) {
+      ctx.strokeTriangle = (x1, y1, x2, y2, x3, y3) => {
+        this.#stroke_triangle(ctx, x1, y1, x2, y2, x3, y3);
       };
     }
-    if (!this.ctx.fillTriangle) {
-      this.ctx.fillTriangle = (x1, y1, x2, y2, x3, y3) => {
-        this.#fill_triangle(x1, y1, x2, y2, x3, y3);
+    if (!ctx.fillTriangle) {
+      ctx.fillTriangle = (x1, y1, x2, y2, x3, y3) => {
+        this.#fill_triangle(ctx, x1, y1, x2, y2, x3, y3);
       };
     }
-    if (!ctx.textWidth) {
-      ctx.textWidth = (text) => this.#text_width(ctx, text);
+    if (!ctx.strokeRoundRect) {
+      ctx.strokeRoundRect = (x, y, w, h, radii) => {
+        this.#stroke_round_rect(ctx, x, y, w, h, radii);
+      };
+    }
+    if (!ctx.fillRoundRect) {
+      ctx.fillRoundRect = (x, y, w, h, radii) => {
+        this.#fill_round_rect(ctx, x, y, w, h, radii);
+      };
     }
   }
 
@@ -798,6 +844,10 @@ class Painter {
   #fill_screen(ctx) {
     const { x, y, w, h } = this.rect;
     ctx.fillRect(x, y, w, h);
+  }
+
+  #text_width(ctx, text) {
+    return ctx.measureText(text).width;
   }
 
   #stroke_line(ctx, from_x, from_y, to_x, to_y) {
@@ -862,26 +912,32 @@ class Painter {
     ctx.fill();
   }
 
-  #text_width(ctx, text) {
-    return ctx.measureText(text).width;
+  #stroke_triangle(ctx, x1, y1, x2, y2, x3, y3) {
+    this.#trace_triangle_path(ctx, x1, y1, x2, y2, x3, y3);
+    ctx.stroke();
   }
 
-  #stroke_triangle(x1, y1, x2, y2, x3, y3) {
-    this.ctx.beginPath();
-    this.ctx.moveTo(x1, y1);
-    this.ctx.lineTo(x2, y2);
-    this.ctx.lineTo(x3, y3);
-    this.ctx.closePath();
-    this.ctx.stroke();
+  #fill_triangle(ctx, x1, y1, x2, y2, x3, y3) {
+    this.#trace_triangle_path(ctx, x1, y1, x2, y2, x3, y3);
+    ctx.fill();
   }
 
-  #fill_triangle(x1, y1, x2, y2, x3, y3) {
-    this.ctx.beginPath();
-    this.ctx.moveTo(x1, y1);
-    this.ctx.lineTo(x2, y2);
-    this.ctx.lineTo(x3, y3);
-    this.ctx.closePath();
-    this.ctx.fill();
+  #trace_triangle_path(ctx, x1, y1, x2, y2, x3, y3) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.lineTo(x3, y3);
+    ctx.closePath();
+  }
+
+  #stroke_round_rect(ctx, x, y, w, h, radii) {
+    ctx.roundRect(x, y, w, h, radii);
+    ctx.stroke();
+  }
+
+  #fill_round_rect(ctx, x, y, w, h, radii) {
+    ctx.roundRect(x, y, w, h, radii);
+    ctx.fill();
   }
 
   #set_up_event_handlers() {
@@ -931,6 +987,8 @@ class Painter {
   }
 
   #root_resize_event() {
+    const initial_smoothing_setting = this.ctx.imageSmoothingEnabled;
+
     const scale_factor = this.rect.dpr;
 
     this.rect.w = this.html_root.offsetWidth;
@@ -945,6 +1003,8 @@ class Painter {
     this.ctx.scale(scale_factor, scale_factor);
 
     this.pxctx.refreshBuffer();
+
+    this.ctx.imageSmoothingEnabled = initial_smoothing_setting;
 
     // Properties declared in setup() are not accessible before setup()
     // is called. Firing resize_event() thus cannot be triggered unless
@@ -1002,10 +1062,12 @@ class Painter {
   mouse_move_event(x, y, dx, dy) {}
 
   /**
+   * @param {number} x
+   * @param {number} y
    * @param {number} dx
    * @param {number} dy
    */
-  mouse_drag_event(dx, dy) {}
+  mouse_drag_event(x, y, dx, dy) {}
 
   #wheel_event_handler(x, y, dx, dy) {
     this.wheel_event(x, y, dx, dy);
@@ -1071,16 +1133,13 @@ class Painter {
     width = width || this.rect.w;
     height = height || this.rect.h;
 
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
     const scale_factor = this.rect.dpr;
 
     const scaled_width = Math.floor(width * scale_factor);
     const scaled_height = Math.floor(height * scale_factor);
 
-    canvas.width = scaled_width;
-    canvas.height = scaled_height;
+    const canvas = new OffscreenCanvas(scaled_width, scaled_height);
+    const ctx = canvas.getContext("2d");
 
     ctx.scale(scale_factor, scale_factor);
 
