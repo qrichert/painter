@@ -186,6 +186,36 @@ A few things to note:
   the current state of the mouse. There is also `this.keyboard` for the
   keyboard.
 
+Challenge: Can you make the square rebound at the bottom of the screen
+by only changing three lines?
+
+<details><summary>Here it is:</summary>
+<p>
+
+Instead of detecting the square being out of screen and teleporting it
+to the top, we detect that it touches the ground and don't let it go any
+lower.
+
+Then, it's just a matter of inverting its speed—a negative speed makes
+it go up—and making it lose some of it in the process (or it would just
+rebound forever).
+
+This works because gravity now works _against_ the square. Eventually,
+gravity will "consume" all of the square's negative speed and turn it
+into positive speed. This is when the square stops and falls back down.
+
+```javascript
+if (this.square.y + this.square.h >= this.rect.yh) {
+  this.square.y = this.rect.yh - this.square.h;
+  // Make the square rebound by inverting its velocity
+  // and dissipate some energy.
+  this.square.vy = -(this.square.vy * 0.618);
+}
+```
+
+</p>
+</details>
+
 ### Going further
 
 This would clearly be overkill here, but larger projects don't usually
@@ -200,7 +230,7 @@ pixels.
 
 You could try to apply this concept to the example above, using a
 `world_to_screen(x, y)` function to convert world coordinates to screen
-coordinates, and a `screen_to_world(x, y)` function to convert
+coordinates, and a `screen_to_world(x, y)` function to convert the
 real-world mouse event coordinates to world coordinates. Don't forget to
 take the canvas' aspect ratio (`this.rect.ar`) into account if you plan
 to move the square in 2D. There's a simple example in
