@@ -171,6 +171,8 @@ class _Mouse {
 
     this._x = -1;
     this._y = -1;
+    this._dx = 0;
+    this._dy = 0;
     this._is_pressed = false;
     this._is_dragging = false;
 
@@ -185,6 +187,16 @@ class _Mouse {
   /** @returns {number} */
   get y() {
     return this._y;
+  }
+
+  /** @returns {number} */
+  get dx() {
+    return this._dx;
+  }
+
+  /** @returns {number} */
+  get dy() {
+    return this._dy;
   }
 
   /** @returns {boolean} */
@@ -205,7 +217,12 @@ class _Mouse {
       this.#mouse_up_event_handler();
     });
     window.addEventListener("mousemove", (e) => {
-      this.#mouse_move_event_handler(e.offsetX, e.offsetY);
+      this.#mouse_move_event_handler(
+        e.offsetX,
+        e.offsetY,
+        e.movementX,
+        e.movementY,
+      );
     });
   }
 
@@ -219,10 +236,12 @@ class _Mouse {
     this._is_dragging = false;
   }
 
-  #mouse_move_event_handler(x, y) {
+  #mouse_move_event_handler(x, y, dx, dy) {
     this._is_dragging = this._is_pressed;
     this._x = x;
     this._y = y;
+    this._dx = dx;
+    this._dy = dy;
   }
 }
 
@@ -520,7 +539,7 @@ class _PixelContext {
 
 /**
  * @readonly
- * @enum {number}
+ * @enum {ScrollDirection}
  */
 const ScrollDirection = {
   Undefined: "Undefined",
@@ -1002,10 +1021,12 @@ class Painter {
   mouse_move_event(x, y, dx, dy) {}
 
   /**
+   * @param {number} x
+   * @param {number} y
    * @param {number} dx
    * @param {number} dy
    */
-  mouse_drag_event(dx, dy) {}
+  mouse_drag_event(x, y, dx, dy) {}
 
   #wheel_event_handler(x, y, dx, dy) {
     this.wheel_event(x, y, dx, dy);
