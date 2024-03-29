@@ -134,6 +134,12 @@ class Rect {
     );
   }
 
+  /** @returns {Rect} */
+  clone() {
+    const { x, y, w, h } = this;
+    return new Rect(x, y, w, h);
+  }
+
   /**
    * @param {number} x
    * @param {number} y
@@ -775,6 +781,9 @@ class Painter {
         this.#fill_screen(ctx);
       };
     }
+    if (!ctx.textWidth) {
+      ctx.textWidth = (text) => this.#text_width(ctx, text);
+    }
     if (!ctx.strokeLine) {
       ctx.strokeLine = (from_x, from_y, to_x, to_y) => {
         this.#stroke_line(ctx, from_x, from_y, to_x, to_y);
@@ -790,18 +799,15 @@ class Painter {
         this.#fill_circle(ctx, x, y, r);
       };
     }
-    if (!this.ctx.strokeTriangle) {
-      this.ctx.strokeTriangle = (x1, y1, x2, y2, x3, y3) => {
-        this.#stroke_triangle(x1, y1, x2, y2, x3, y3);
+    if (!ctx.strokeTriangle) {
+      ctx.strokeTriangle = (x1, y1, x2, y2, x3, y3) => {
+        this.#stroke_triangle(ctx, x1, y1, x2, y2, x3, y3);
       };
     }
-    if (!this.ctx.fillTriangle) {
-      this.ctx.fillTriangle = (x1, y1, x2, y2, x3, y3) => {
-        this.#fill_triangle(x1, y1, x2, y2, x3, y3);
+    if (!ctx.fillTriangle) {
+      ctx.fillTriangle = (x1, y1, x2, y2, x3, y3) => {
+        this.#fill_triangle(ctx, x1, y1, x2, y2, x3, y3);
       };
-    }
-    if (!ctx.textWidth) {
-      ctx.textWidth = (text) => this.#text_width(ctx, text);
     }
   }
 
@@ -817,6 +823,10 @@ class Painter {
   #fill_screen(ctx) {
     const { x, y, w, h } = this.rect;
     ctx.fillRect(x, y, w, h);
+  }
+
+  #text_width(ctx, text) {
+    return ctx.measureText(text).width;
   }
 
   #stroke_line(ctx, from_x, from_y, to_x, to_y) {
@@ -881,26 +891,22 @@ class Painter {
     ctx.fill();
   }
 
-  #text_width(ctx, text) {
-    return ctx.measureText(text).width;
+  #stroke_triangle(ctx, x1, y1, x2, y2, x3, y3) {
+    this.#trace_triangle_path(ctx, x1, y1, x2, y2, x3, y3);
+    ctx.stroke();
   }
 
-  #stroke_triangle(x1, y1, x2, y2, x3, y3) {
-    this.ctx.beginPath();
-    this.ctx.moveTo(x1, y1);
-    this.ctx.lineTo(x2, y2);
-    this.ctx.lineTo(x3, y3);
-    this.ctx.closePath();
-    this.ctx.stroke();
+  #fill_triangle(ctx, x1, y1, x2, y2, x3, y3) {
+    this.#trace_triangle_path(ctx, x1, y1, x2, y2, x3, y3);
+    ctx.fill();
   }
 
-  #fill_triangle(x1, y1, x2, y2, x3, y3) {
-    this.ctx.beginPath();
-    this.ctx.moveTo(x1, y1);
-    this.ctx.lineTo(x2, y2);
-    this.ctx.lineTo(x3, y3);
-    this.ctx.closePath();
-    this.ctx.fill();
+  #trace_triangle_path(ctx, x1, y1, x2, y2, x3, y3) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.lineTo(x3, y3);
+    ctx.closePath();
   }
 
   #set_up_event_handlers() {
@@ -1092,16 +1098,13 @@ class Painter {
     width = width || this.rect.w;
     height = height || this.rect.h;
 
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
     const scale_factor = this.rect.dpr;
 
     const scaled_width = Math.floor(width * scale_factor);
     const scaled_height = Math.floor(height * scale_factor);
 
-    canvas.width = scaled_width;
-    canvas.height = scaled_height;
+    const canvas = new OffscreenCanvas(scaled_width, scaled_height);
+    const ctx = canvas.getContext("2d");
 
     ctx.scale(scale_factor, scale_factor);
 
