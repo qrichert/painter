@@ -25,6 +25,17 @@ if (!Array.prototype.shuffle) {
   };
 }
 
+/**
+ * Return random value between min and max boundaries.
+ *
+ * @param {number} min
+ * @param {number} max
+ * @returns {number}
+ */
+function rand(min = 0, max = 1) {
+  return Math.random() * (max - min) + min;
+}
+
 class Rect {
   /**
    * @param {number} x
@@ -717,7 +728,7 @@ class DebugMonitor {
     this.ctx.save();
     this.ctx.globalAlpha = this.background_alpha;
     this.ctx.fillStyle = this.background_color;
-    this.ctx.fillRect(
+    this.ctx.fillRoundRect(
       this.rect.x,
       this.rect.y,
       this.rect.w + this.padding * 2,
@@ -807,6 +818,16 @@ class Painter {
     if (!ctx.fillTriangle) {
       ctx.fillTriangle = (x1, y1, x2, y2, x3, y3) => {
         this.#fill_triangle(ctx, x1, y1, x2, y2, x3, y3);
+      };
+    }
+    if (!ctx.strokeRoundRect) {
+      ctx.strokeRoundRect = (x, y, w, h, radii) => {
+        this.#stroke_round_rect(ctx, x, y, w, h, radii);
+      };
+    }
+    if (!ctx.fillRoundRect) {
+      ctx.fillRoundRect = (x, y, w, h, radii) => {
+        this.#fill_round_rect(ctx, x, y, w, h, radii);
       };
     }
   }
@@ -909,6 +930,16 @@ class Painter {
     ctx.closePath();
   }
 
+  #stroke_round_rect(ctx, x, y, w, h, radii) {
+    ctx.roundRect(x, y, w, h, radii);
+    ctx.stroke();
+  }
+
+  #fill_round_rect(ctx, x, y, w, h, radii) {
+    ctx.roundRect(x, y, w, h, radii);
+    ctx.fill();
+  }
+
   #set_up_event_handlers() {
     document.addEventListener("DOMContentLoaded", () => {
       this.#root_resize_event();
@@ -956,6 +987,8 @@ class Painter {
   }
 
   #root_resize_event() {
+    const initial_smoothing_setting = this.ctx.imageSmoothingEnabled;
+
     const scale_factor = this.rect.dpr;
 
     this.rect.w = this.html_root.offsetWidth;
@@ -970,6 +1003,8 @@ class Painter {
     this.ctx.scale(scale_factor, scale_factor);
 
     this.pxctx.refreshBuffer();
+
+    this.ctx.imageSmoothingEnabled = initial_smoothing_setting;
 
     // Properties declared in setup() are not accessible before setup()
     // is called. Firing resize_event() thus cannot be triggered unless
