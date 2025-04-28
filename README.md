@@ -1,5 +1,8 @@
 # Painter
 
+![GitHub License](https://img.shields.io/github/license/qrichert/painter?color=blue)
+[![tokei (loc)](https://tokei.rs/b1/github/qrichert/painter?label=loc&style=flat)](https://github.com/XAMPPRocky/tokei)
+
 Painter is a bare-bones drawing toolkit for HTML5 canvas. It takes away
 a lot of boilerplate code, like setting up the canvas, creating the game
 loop, listening for events, etc.
