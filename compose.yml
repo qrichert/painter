@@ -1,0 +1,33 @@
+services:
+  painter:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    volumes:
+      - type: bind
+        source: .
+        target: /srv
+        read_only: true
+        bind:
+          create_host_path: false
+    configs:
+      - source: demo_caddyfile
+        target: /etc/caddy/Caddyfile
+
+configs:
+  demo_caddyfile:
+    content: |
+      :8085 {
+          @shared path /painter.js /utils.js
+
+          handle @shared {
+              root * /srv
+              file_server
+          }
+
+          handle {
+              root * /srv/demo
+              file_server browse
+          }
+      }
