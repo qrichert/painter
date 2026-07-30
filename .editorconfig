@@ -6,7 +6,7 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.{css,html,js,yaml,yml}]
+[*.{css,html,js,json,yaml,yml}]
 indent_size = 2
 indent_style = space
 max_line_length = 80
